@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>Desk Calendar</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app" class="app-container glass">
+    <!-- Title Bar -->
+    <header class="title-bar">
+      <div class="title-bar-drag">
+        <button class="nav-btn" id="prevMonth" title="上月">◀</button>
+        <span class="month-title-wrap">
+          <h1 class="month-title" id="monthTitle">2026年5月</h1>
+          <!-- Date Picker Popup -->
+          <div class="date-picker hidden" id="datePicker">
+            <div class="date-picker-header">
+              <button class="dp-nav" id="dpPrevYear">◀◀</button>
+              <span class="dp-year" id="dpYear">2026</span>
+              <button class="dp-nav" id="dpNextYear">▶▶</button>
+            </div>
+            <div class="dp-month-grid" id="dpMonthGrid"></div>
+          </div>
+        </span>
+        <button class="nav-btn" id="nextMonth" title="下月">▶</button>
+      </div>
+      <div class="window-controls">
+        <button class="mode-toggle-btn" id="modeToggleBtn" title="切换显示模式">紧凑</button>
+        <button class="ctrl-btn" id="settingsBtn" title="设置">⚙</button>
+        <button class="ctrl-btn minimize-btn" id="minimizeBtn" title="最小化">─</button>
+        <button class="ctrl-btn close-btn" id="closeBtn" title="关闭">✕</button>
+      </div>
+    </header>
+
+    <!-- Weekday Header -->
+    <div class="weekday-header" id="weekdayHeader">
+      <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span class="weekend">日</span>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+    <!-- Event Panel -->
+    <div class="event-panel" id="eventPanel">
+      <div class="event-panel-header">
+        <span class="event-date" id="eventDate">选择日期查看事项</span>
+        <button class="add-event-btn" id="addEventBtn">+ 添加事项</button>
+      </div>
+      <div class="event-list" id="eventList"></div>
+      <!-- Inline Event Form -->
+      <div class="event-form hidden" id="eventForm">
+        <input type="text" id="eventTitle" placeholder="事项标题" maxlength="100" />
+        <div class="event-form-row">
+          <input type="time" id="eventTime" />
+          <div class="color-picker" id="colorPicker"></div>
+        </div>
+        <textarea id="eventNote" placeholder="备注（可选）" rows="2"></textarea>
+        <div class="event-form-actions">
+          <button class="btn-secondary" id="cancelEventBtn">取消</button>
+          <button class="btn-primary" id="saveEventBtn">保存</button>
+          <button class="btn-danger hidden" id="deleteEventBtn">删除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-overlay hidden" id="settingsOverlay"></div>
+    <div class="settings-panel hidden" id="settingsPanel">
+      <div class="settings-header">
+        <h2>设置</h2>
+        <button class="ctrl-btn" id="closeSettingsBtn">✕</button>
+      </div>
+      <div class="settings-body">
+        <!-- Opacity -->
+        <div class="setting-item">
+          <label>透明度</label>
+          <div class="setting-control">
+            <input type="range" id="opacitySlider" min="30" max="100" value="78" />
+            <span class="setting-value" id="opacityValue">78%</span>
+          </div>
+        </div>
+        <!-- Theme -->
+        <div class="setting-item">
+          <label>主题</label>
+          <div class="setting-control">
+            <button class="theme-btn" id="themeToggle">
+              <span id="themeLabel">深色模式</span>
+            </button>
+          </div>
+        </div>
+        <!-- Font Size -->
+        <div class="setting-item">
+          <label>字体大小</label>
+          <div class="setting-control font-size-slider">
+            <span class="fs-label">小</span>
+            <input type="range" id="fontSizeSlider" min="0" max="2" step="1" value="1" />
+            <span class="fs-label">大</span>
+          </div>
+        </div>
+        <!-- Calendar Language -->
+        <div class="setting-item">
+          <label>日历语言</label>
+          <div class="setting-control">
+            <button class="theme-btn" id="langToggle">
+              <span id="langLabel">中文</span>
+            </button>
+          </div>
+        </div>
+        <!-- Grid Lines -->
+        <div class="setting-item">
+          <label>网格线</label>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="gridToggle" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+        <!-- Autostart -->
+        <div class="setting-item">
+          <label>开机自启</label>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="autostartToggle" />
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+        <!-- About -->
+        <div class="setting-item about-section">
+          <label>关于</label>
+          <div class="setting-control">
+            <span class="about-text" id="aboutVersion">Desk Calendar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>
