@@ -23,9 +23,14 @@ Events.render = function (dateStr) {
 
   // Format date for display
   const { year, month, day } = App.parseDate(dateStr);
-  const lang = App.state.data.settings.calendarLang || 'zh';
+  const lang = App.state.data.settings.language || 'zh';
+  const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const dow = new Date(year, month, day).getDay();
-  if (lang === 'ja') {
+  if (lang === 'en') {
+    const enDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    dateLabel.textContent = `${enMonths[month]} ${day}, ${year} ${enDays[dow]}`;
+  } else if (lang === 'ja') {
     const jaDays = ['日', '月', '火', '水', '木', '金', '土'];
     dateLabel.textContent = `${year}年${month + 1}月${day}日 ${jaDays[dow]}曜日`;
   } else {

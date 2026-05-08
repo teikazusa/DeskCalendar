@@ -11,30 +11,46 @@ Calendar.hexToRgba = function (hex, alpha) {
 };
 
 // ─── Calendar language helpers ───────────────────────────────────
-Calendar.WEEKDAYS_ZH = ['一', '二', '三', '四', '五', '六', '日'];
-Calendar.WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
-
-Calendar.getWeekdays = function (lang) {
-  return lang === 'ja' ? Calendar.WEEKDAYS_JA : Calendar.WEEKDAYS_ZH;
+Calendar.WEEKDAYS = {
+  zh: ['一', '二', '三', '四', '五', '六', '日'],
+  ja: ['月', '火', '水', '木', '金', '土', '日'],
+  en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
 };
 
-Calendar.getGridOffset = function (firstDay, lang) {
-  if (lang === 'ja') {
-    // Week starts on Sunday: Sun=0, Mon=1, ..., Sat=6
-    return firstDay.getDay();
+Calendar.getWeekdays = function (lang, weekStart) {
+  const arr = Calendar.WEEKDAYS[lang] || Calendar.WEEKDAYS.zh;
+  if (weekStart === 'sunday') {
+    // Rotate last element (Sunday) to front: [Mon..Sun] → [Sun, Mon..Sat]
+    return [arr[arr.length - 1], ...arr.slice(0, -1)];
   }
-  // Week starts on Monday: Mon=0, Tue=1, ..., Sun=6
+  return arr;
+};
+
+Calendar.getMonthTitle = function (year, month, lang) {
+  if (lang === 'en') {
+    const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${enMonths[month]} ${year}`;
+  }
+  return `${year}年${month + 1}月`;
+};
+
+Calendar.getGridOffset = function (firstDay, weekStart) {
+  if (weekStart === 'sunday') {
+    return firstDay.getDay(); // Sun=0, Mon=1, ..., Sat=6
+  }
+  // Monday first: Mon=0, Tue=1, ..., Sun=6
   const off = firstDay.getDay() - 1;
   return off < 0 ? 6 : off;
 };
 
 // ─── Determine month grid ──────────────────────────────────────
-Calendar.getMonthGrid = function (year, month, lang) {
+Calendar.getMonthGrid = function (year, month, weekStart) {
   const firstDay = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrev = new Date(year, month, 0).getDate();
 
-  let startOffset = Calendar.getGridOffset(firstDay, lang || 'zh');
+  let startOffset = Calendar.getGridOffset(firstDay, weekStart || 'monday');
 
   const grid = [];
 
@@ -67,20 +83,22 @@ Calendar.render = function () {
   const { currentYear: y, currentMonth: m, selectedDate } = App.state;
   const s = App.state.data.settings;
   const displayMode = s.displayMode || 'compact';
-  const lang = s.calendarLang || 'zh';
+  const lang = s.language || 'zh';
+  const weekStart = s.weekStart || 'monday';
   const isOverview = displayMode === 'overview';
 
-  document.getElementById('monthTitle').textContent = App.formatMonthTitle(y, m);
+  document.getElementById('monthTitle').textContent = Calendar.getMonthTitle(y, m, lang);
 
   // Update weekday header
-  const wdNames = Calendar.getWeekdays(lang);
+  const wdNames = Calendar.getWeekdays(lang, weekStart);
   const header = document.getElementById('weekdayHeader');
+  const wdLen = wdNames.length;
   header.innerHTML = wdNames.map((d, i) => {
-    const isWeekend = lang === 'ja' ? (i === 0 || i === 6) : (i >= 5);
+    const isWeekend = weekStart === 'sunday' ? (i === 0 || i === wdLen - 1) : (i >= 5);
     return `<span${isWeekend ? ' class="weekend"' : ''}>${d}</span>`;
   }).join('');
 
-  const grid = Calendar.getMonthGrid(y, m, lang);
+  const grid = Calendar.getMonthGrid(y, m, weekStart);
   const container = document.getElementById('calendarGrid');
   container.innerHTML = '';
   container.classList.toggle('overview', isOverview);

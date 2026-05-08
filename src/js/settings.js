@@ -24,9 +24,14 @@ Settings.initUI = function () {
   if (fsSlider) fsSlider.value = sizeVal;
   App.applyFontSize(s.fontSize || 'default');
 
-  // Calendar language
+  // Week start
+  const wsLabel = document.getElementById('weekStartLabel');
+  wsLabel.textContent = s.weekStart === 'sunday' ? '周日' : '周一';
+
+  // Language
+  const langMap = { zh: '中文', ja: '日本語', en: 'English' };
   const langLabel = document.getElementById('langLabel');
-  langLabel.textContent = s.calendarLang === 'ja' ? '日本' : '中国';
+  langLabel.textContent = langMap[s.language] || '中文';
 
   // Grid lines
   const gridToggle = document.getElementById('gridToggle');
@@ -76,12 +81,25 @@ Settings.initUI = function () {
     App.saveData();
   });
 
-  // Calendar language
+  // Week start toggle
+  document.getElementById('weekStartToggle').addEventListener('click', () => {
+    const cur = App.state.data.settings.weekStart || 'monday';
+    const next = cur === 'monday' ? 'sunday' : 'monday';
+    App.state.data.settings.weekStart = next;
+    wsLabel.textContent = next === 'sunday' ? '周日' : '周一';
+    App.saveData();
+    window.Calendar.render();
+    window.Events.render(App.state.selectedDate);
+  });
+
+  // Language toggle (3-way cycle)
+  const langCycle = ['zh', 'ja', 'en'];
   document.getElementById('langToggle').addEventListener('click', () => {
-    const current = App.state.data.settings.calendarLang || 'zh';
-    const next = current === 'zh' ? 'ja' : 'zh';
-    App.state.data.settings.calendarLang = next;
-    langLabel.textContent = next === 'ja' ? '日本' : '中国';
+    const cur = App.state.data.settings.language || 'zh';
+    const idx = langCycle.indexOf(cur);
+    const next = langCycle[(idx + 1) % langCycle.length];
+    App.state.data.settings.language = next;
+    langLabel.textContent = langMap[next] || '中文';
     App.saveData();
     window.Calendar.render();
     window.Events.render(App.state.selectedDate);
