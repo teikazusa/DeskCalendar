@@ -1,39 +1,40 @@
 # DeskCalendar
 
-An elegant transparent calendar widget for Windows desktop. Sits on your wallpaper like a native part of the system.
+一个优雅的 Windows 桌面透明日历小部件，像壁纸的一部分一样融入桌面。
 
-## Features
+## 功能
 
-- **Transparent glass-morphism UI** — seamless desktop integration with adjustable opacity
-- **Two display modes** — Compact (dot indicators) and Overview (inline event text)
-- **Event management** — add, edit, delete events with color labels and optional time/notes
-- **Countdown** — click ⏱ on any event to see remaining days/hours/minutes
-- **Chinese / Japanese calendar** — switch between 中国 (Mon-first) and 日本 (Sun-first)
-- **Quick navigation** — left/right arrows for month, click year for month picker
-- **Font scaling** — small / default / large, affects all text proportionally
-- **Dark & light themes** — follows system preference, toggle in settings
-- **Auto-start** — optional launch on Windows boot
-- **Grid lines** — optional subtle borders between calendar cells
-- **Drag to copy** — drag an event card onto any date cell to duplicate it
-- **Smart window resize** — auto-fits height when selecting dates with events
+- **透明玻璃拟态 UI** — 无缝桌面融合，支持透明度调节
+- **两种显示模式** — 紧凑模式（圆点指示）和总览模式（内联事项文字）
+- **事项管理** — 添加、编辑、删除事项，支持颜色标签、时间和备注
+- **倒计时** — 点击事项旁的 ⏱ 查看剩余天/小时/分钟
+- **拖拽复制** — 将事项卡片拖到任意日期格子上即可复制
+- **多语言支持** — 中文 / 日本語 / English，星期名和日期格式随之切换
+- **周起始切换** — 周一或周日开头
+- **日期快速跳转** — 点击年月标题弹出月份选择器
+- **字体缩放** — 小 / 默认 / 大三档，全局等比例调整
+- **明暗主题** — 深色/浅色模式切换
+- **网格线** — 可选的日历单元格分割线
+- **开机自启** — 可选随 Windows 启动
+- **智能窗口缩放** — 选中日期时自动适配高度
 
-## Getting Started
+## 快速开始
 
 ```bash
 npm install
 npm start
 ```
 
-## Build
+## 构建
 
 ```bash
 npm run build
 ```
 
-Output goes to `release/DeskCalendar-win32-x64/`. The `.exe` is portable — no installation needed.
+输出到 `release/DeskCalendar-win32-x64/`，exe 为绿色便携版，无需安装。
 
-## Tech Stack
+## 技术栈
 
-- [Electron](https://www.electronjs.org/) — desktop shell
-- Vanilla HTML/CSS/JS — no framework, zero build step
-- Glass-morphism with `backdrop-filter` and CSS custom properties
+- [Electron](https://www.electronjs.org/) — 桌面框架
+- 原生 HTML/CSS/JS — 无框架依赖，零构建步骤
+- 玻璃拟态效果 — `backdrop-filter` + CSS 自定义属性
