@@ -4,9 +4,9 @@
   --bg-secondary: rgba(255, 255, 255, 0);
   --bg-hover: rgba(255, 255, 255, 0.22);
   --bg-active: rgba(255, 255, 255, 0.28);
-  --text-primary: #f0f0f0;
-  --text-secondary: rgba(240, 240, 240, 0.65);
-  --text-muted: rgba(240, 240, 240, 0.4);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-muted: rgba(255, 255, 255, 0.4);
   --border-color: rgba(255, 255, 255, 0.12);
   --border-light: rgba(255, 255, 255, 0.06);
   --accent: #64b5f6;
@@ -38,9 +38,9 @@
   --bg-secondary: rgba(255, 255, 255, 0.35);
   --bg-hover: rgba(0, 0, 0, 0.06);
   --bg-active: rgba(0, 0, 0, 0.1);
-  --text-primary: #1a1a2e;
-  --text-secondary: rgba(26, 26, 46, 0.6);
-  --text-muted: rgba(26, 26, 46, 0.35);
+  --text-primary: #111111;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --text-muted: rgba(0, 0, 0, 0.35);
   --border-color: rgba(255, 255, 255, 0.5);
   --border-light: rgba(0, 0, 0, 0.06);
   --accent: #1976d2;
@@ -324,7 +324,7 @@ body {
 }
 
 .weekday-header .weekend {
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* ─── Calendar Grid ──────────────────────────────────────────── */
