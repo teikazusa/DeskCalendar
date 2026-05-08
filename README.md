@@ -8,7 +8,7 @@ An elegant transparent calendar widget for Windows desktop. Sits on your wallpap
 - **Two display modes** — Compact (dot indicators) and Overview (inline event text)
 - **Event management** — add, edit, delete events with color labels and optional time/notes
 - **Countdown** — click ⏱ on any event to see remaining days/hours/minutes
-- **Chinese / Japanese calendar** — switch between 中文 (Mon-first) and 日本語 (Sun-first)
+- **Chinese / Japanese calendar** — switch between 中国 (Mon-first) and 日本 (Sun-first)
 - **Quick navigation** — left/right arrows for month, click year for month picker
 - **Font scaling** — small / default / large, affects all text proportionally
 - **Dark & light themes** — follows system preference, toggle in settings
