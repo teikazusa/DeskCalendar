@@ -8,7 +8,7 @@
   --text-secondary: rgba(255, 255, 255, 0.75);
   --text-muted: rgba(255, 255, 255, 0.4);
   --border-color: rgba(255, 255, 255, 0.12);
-  --border-light: rgba(255, 255, 255, 0.06);
+  --border-light: rgba(255, 255, 255, 0.09);
   --accent: #64b5f6;
   --accent-hover: #90caf9;
   --today-bg: rgba(255, 255, 255, 0.18);
@@ -42,7 +42,7 @@
   --text-secondary: rgba(0, 0, 0, 0.7);
   --text-muted: rgba(0, 0, 0, 0.35);
   --border-color: rgba(255, 255, 255, 0.5);
-  --border-light: rgba(0, 0, 0, 0.06);
+  --border-light: rgba(0, 0, 0, 0.09);
   --accent: #1976d2;
   --accent-hover: #1565c0;
   --today-bg: rgba(0, 0, 0, 0.15);
