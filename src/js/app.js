@@ -6,7 +6,9 @@ const App = {
     currentMonth: 0, // 0-indexed (0=Jan)
     selectedDate: null, // 'YYYY-MM-DD' or null
     editingEventId: null,
+    countdownEvent: null, // { dateStr, id, title, time } or null
   },
+  _countdownTimer: null,
 };
 
 // ─── Utility ───────────────────────────────────────────────────
@@ -79,6 +81,17 @@ App.init = async function () {
   Settings.initUI();
   App.resizeToFit();
 
+  // Restore saved countdown if event still exists
+  const savedCd = App.state.data.settings._savedCountdown;
+  if (savedCd && savedCd.dateStr && savedCd.id) {
+    const evts = (App.state.data.events || {})[savedCd.dateStr] || [];
+    if (evts.some(e => e.id === savedCd.id)) {
+      App.setCountdown(savedCd.dateStr, savedCd.id, savedCd.title, savedCd.time);
+    } else {
+      delete App.state.data.settings._savedCountdown;
+    }
+  }
+
   document.getElementById('minimizeBtn').addEventListener('click', () => window.api.minimize());
   document.getElementById('closeBtn').addEventListener('click', () => window.api.close());
   document.getElementById('settingsBtn').addEventListener('click', Settings.toggle);
@@ -114,6 +127,7 @@ App.init = async function () {
     window.Calendar.render();
     window.Events.render(App.state.selectedDate);
     App.resizeToFit();
+    App.refreshCountdownVisibility();
   });
 
   // Clear date selection when window loses focus
@@ -178,6 +192,79 @@ App.resizeToFit = async function () {
     const totalH = Math.ceil(contentEnd + padBottom + borderY / 2 + 17);
     await window.api.resizeWindow(w, totalH);
   } catch (_) {}
+};
+
+// ─── Countdown ─────────────────────────────────────────────────
+App.setCountdown = function (dateStr, eventId, title, time) {
+  App.state.countdownEvent = { dateStr, id: eventId, title, time };
+  App.state.data.settings._savedCountdown = { dateStr, id: eventId, title, time };
+  App.saveData();
+  App._startCountdownTimer();
+  if (App.state.data.settings.displayMode === 'overview') {
+    App.updateCountdownDisplay();
+  }
+};
+
+App.clearCountdown = function () {
+  App.state.countdownEvent = null;
+  delete App.state.data.settings._savedCountdown;
+  App.saveData();
+  if (App._countdownTimer) {
+    clearInterval(App._countdownTimer);
+    App._countdownTimer = null;
+  }
+  const bar = document.getElementById('countdownBar');
+  const text = document.getElementById('countdownText');
+  if (bar) bar.classList.add('hidden');
+};
+
+App._startCountdownTimer = function () {
+  if (App._countdownTimer) clearInterval(App._countdownTimer);
+  App._countdownTimer = setInterval(App.updateCountdownDisplay, 30000); // every 30s
+};
+
+App.updateCountdownDisplay = function () {
+  const ev = App.state.countdownEvent;
+  const bar = document.getElementById('countdownBar');
+  const text = document.getElementById('countdownText');
+  if (!ev || !bar || !text) return;
+
+  const target = new Date(ev.dateStr + (ev.time ? 'T' + ev.time + ':00' : 'T00:00:00'));
+  const now = new Date();
+  const diff = target - now;
+
+  if (diff <= 0) {
+    text.textContent = `「${ev.title}」已到期`;
+    bar.classList.remove('hidden');
+    return;
+  }
+
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  let display;
+  if (days > 0) {
+    display = `距离「${ev.title}」还有 ${days} 天 ${hours} 小时 ${minutes} 分`;
+  } else if (hours > 0) {
+    display = `距离「${ev.title}」还有 ${hours} 小时 ${minutes} 分`;
+  } else {
+    display = `距离「${ev.title}」还有 ${minutes} 分`;
+  }
+  text.textContent = display;
+  bar.classList.remove('hidden');
+};
+
+App.refreshCountdownVisibility = function () {
+  const isOverview = App.state.data.settings.displayMode === 'overview';
+  const bar = document.getElementById('countdownBar');
+  if (!bar) return;
+  if (isOverview && App.state.countdownEvent) {
+    App.updateCountdownDisplay();
+  } else {
+    bar.classList.add('hidden');
+  }
 };
 
 App.updateModeToggleBtn = function () {

@@ -160,6 +160,44 @@ Calendar.render = function () {
 
     el.dataset.date = dateStr;
     el.addEventListener('click', () => Calendar.selectDate(dateStr));
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave', () => {
+      el.classList.remove('drag-over');
+    });
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        if (data && data.id && data.date && data.date !== dateStr) {
+          // Find original event
+          const srcEvents = (App.state.data.events || {})[data.date] || [];
+          const srcEv = srcEvents.find(ev => ev.id === data.id);
+          if (srcEv) {
+            // Copy to target date
+            const targetKey = dateStr;
+            if (!App.state.data.events[targetKey]) {
+              App.state.data.events[targetKey] = [];
+            }
+            const newEv = { ...srcEv, id: App.generateId() };
+            App.state.data.events[targetKey].push(newEv);
+            App.state.data.events[targetKey].sort((a, b) => {
+              if (a.time && b.time) return a.time.localeCompare(b.time);
+              if (a.time) return -1;
+              if (b.time) return 1;
+              return 0;
+            });
+            App.saveData();
+            Calendar.render();
+            window.Events.render(App.state.selectedDate);
+          }
+        }
+      } catch (_) {}
+    });
     container.appendChild(el);
   });
 };

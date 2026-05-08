@@ -11,27 +11,34 @@
   <div id="app" class="app-container glass">
     <!-- Title Bar -->
     <header class="title-bar">
-      <div class="title-bar-drag">
-        <button class="nav-btn" id="prevMonth" title="上月">◀</button>
-        <span class="month-title-wrap">
-          <h1 class="month-title" id="monthTitle">2026年5月</h1>
-          <!-- Date Picker Popup -->
-          <div class="date-picker hidden" id="datePicker">
-            <div class="date-picker-header">
-              <button class="dp-nav" id="dpPrevYear">◀◀</button>
-              <span class="dp-year" id="dpYear">2026</span>
-              <button class="dp-nav" id="dpNextYear">▶▶</button>
+      <div class="title-bar-top">
+        <div class="title-bar-drag">
+          <button class="nav-btn" id="prevMonth" title="上月">◀</button>
+          <span class="month-title-wrap">
+            <h1 class="month-title" id="monthTitle">2026年5月</h1>
+            <!-- Date Picker Popup -->
+            <div class="date-picker hidden" id="datePicker">
+              <div class="date-picker-header">
+                <button class="dp-nav" id="dpPrevYear">◀◀</button>
+                <span class="dp-year" id="dpYear">2026</span>
+                <button class="dp-nav" id="dpNextYear">▶▶</button>
+              </div>
+              <div class="dp-month-grid" id="dpMonthGrid"></div>
             </div>
-            <div class="dp-month-grid" id="dpMonthGrid"></div>
-          </div>
-        </span>
-        <button class="nav-btn" id="nextMonth" title="下月">▶</button>
+          </span>
+          <button class="nav-btn" id="nextMonth" title="下月">▶</button>
+        </div>
+        <div class="window-controls">
+          <button class="mode-toggle-btn" id="modeToggleBtn" title="切换显示模式">紧凑</button>
+          <button class="ctrl-btn" id="settingsBtn" title="设置">⚙</button>
+          <button class="ctrl-btn minimize-btn" id="minimizeBtn" title="最小化">─</button>
+          <button class="ctrl-btn close-btn" id="closeBtn" title="关闭">✕</button>
+        </div>
       </div>
-      <div class="window-controls">
-        <button class="mode-toggle-btn" id="modeToggleBtn" title="切换显示模式">紧凑</button>
-        <button class="ctrl-btn" id="settingsBtn" title="设置">⚙</button>
-        <button class="ctrl-btn minimize-btn" id="minimizeBtn" title="最小化">─</button>
-        <button class="ctrl-btn close-btn" id="closeBtn" title="关闭">✕</button>
+      <!-- Countdown Bar -->
+      <div class="countdown-bar hidden" id="countdownBar">
+        <span class="cd-icon">⏱</span>
+        <span class="cd-text" id="countdownText">选择事项查看倒计时</span>
       </div>
     </header>
 
@@ -102,7 +109,7 @@
         </div>
         <!-- Calendar Language -->
         <div class="setting-item">
-          <label>日历语言</label>
+          <label>日历样式</label>
           <div class="setting-control">
             <button class="theme-btn" id="langToggle">
               <span id="langLabel">中文</span>

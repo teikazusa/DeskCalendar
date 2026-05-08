@@ -26,7 +26,7 @@ Settings.initUI = function () {
 
   // Calendar language
   const langLabel = document.getElementById('langLabel');
-  langLabel.textContent = s.calendarLang === 'ja' ? '日本語' : '中文';
+  langLabel.textContent = s.calendarLang === 'ja' ? '日本' : '中国';
 
   // Grid lines
   const gridToggle = document.getElementById('gridToggle');
@@ -81,7 +81,7 @@ Settings.initUI = function () {
     const current = App.state.data.settings.calendarLang || 'zh';
     const next = current === 'zh' ? 'ja' : 'zh';
     App.state.data.settings.calendarLang = next;
-    langLabel.textContent = next === 'ja' ? '日本語' : '中文';
+    langLabel.textContent = next === 'ja' ? '日本' : '中国';
     App.saveData();
     window.Calendar.render();
     window.Events.render(App.state.selectedDate);

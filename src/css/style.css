@@ -1,7 +1,7 @@
 /* ─── CSS Custom Properties (Themes) ─────────────────────────── */
 :root {
-  --bg-primary: rgba(255, 255, 255, 0.18);
-  --bg-secondary: rgba(255, 255, 255, 0.12);
+  --bg-primary: rgba(255, 255, 255, 0.2);
+  --bg-secondary: rgba(255, 255, 255, 0);
   --bg-hover: rgba(255, 255, 255, 0.22);
   --bg-active: rgba(255, 255, 255, 0.28);
   --text-primary: #f0f0f0;
@@ -112,10 +112,15 @@ body {
 /* ─── Title Bar ──────────────────────────────────────────────── */
 .title-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   -webkit-app-region: drag;
   margin-bottom: 10px;
+}
+
+.title-bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   min-height: 32px;
 }
 
@@ -187,6 +192,33 @@ body {
 .close-btn:hover {
   background: var(--danger);
   color: #fff;
+}
+
+/* ─── Countdown Bar ──────────────────────────────────────────── */
+.countdown-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 0 2px;
+  min-height: 24px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 4px;
+}
+
+.countdown-bar.hidden {
+  display: none;
+}
+
+.countdown-bar .cd-icon {
+  font-size: 13px;
+}
+
+.countdown-bar .cd-text {
+  letter-spacing: 0.3px;
 }
 
 /* ─── Date Picker Popup ──────────────────────────────────────── */
@@ -322,6 +354,15 @@ body {
   background: var(--bg-hover);
 }
 
+.day-cell.drag-over {
+  background: var(--accent) !important;
+  opacity: 0.6;
+}
+
+.event-item.dragging {
+  opacity: 0.4;
+}
+
 .calendar-grid.show-grid .day-cell {
   border: 1px solid var(--border-light);
   border-radius: 0;
@@ -353,6 +394,12 @@ body {
 .day-cell.selected {
   background: var(--selected-bg);
   border: 1px solid var(--border-color);
+}
+
+.day-cell.today.drag-over {
+  background: var(--accent) !important;
+  opacity: 0.6;
+  border: 1px solid var(--today-border);
 }
 
 .day-cell.today.selected {
@@ -453,6 +500,7 @@ body {
   gap: 10px;
   padding: 8px 12px;
   background: var(--bg-secondary);
+  backdrop-filter: blur(8px);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -503,7 +551,7 @@ body {
 .event-item .event-action-btn {
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-primary);
   cursor: pointer;
   padding: 2px 5px;
   border-radius: 4px;
@@ -514,6 +562,11 @@ body {
 .event-item .event-action-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.event-item .event-action-btn.cd-active {
+  color: var(--accent);
+  background: var(--bg-hover);
 }
 
 .event-item .event-action-btn.delete-btn:hover {

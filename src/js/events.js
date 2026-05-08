@@ -3,7 +3,7 @@ window.Events = {};
 
 const EVENT_COLORS = [
   '#FF3B30', '#FF9500', '#FFCC00', '#34C759',
-  '#007AFF', '#AF52DE', '#C67C52', '#5AC8FA',
+  '#007AFF', '#AF52DE', '#8E8E93', '#5AC8FA',
 ];
 
 // ─── Render events for a given date ────────────────────────────
@@ -49,6 +49,17 @@ Events.render = function (dateStr) {
   events.forEach(ev => {
     const item = document.createElement('div');
     item.className = 'event-item';
+    item.draggable = true;
+    item.dataset.dragEventId = ev.id;
+    item.dataset.dragDate = dateStr;
+    item.addEventListener('dragstart', (e) => {
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('text/plain', JSON.stringify({ id: ev.id, date: dateStr }));
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+    });
 
     const dot = document.createElement('span');
     dot.className = 'event-color-dot';
@@ -79,6 +90,26 @@ Events.render = function (dateStr) {
       Events.showForm(dateStr, ev.id);
     });
     actions.appendChild(editBtn);
+
+    const cdBtn = document.createElement('button');
+    cdBtn.className = 'event-action-btn';
+    cdBtn.textContent = '⏱';
+    const curCd = App.state.countdownEvent;
+    if (curCd && curCd.id === ev.id && curCd.dateStr === dateStr) {
+      cdBtn.classList.add('cd-active');
+    }
+    cdBtn.title = curCd && curCd.id === ev.id && curCd.dateStr === dateStr ? '取消倒计时' : '倒计时';
+    cdBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cur = App.state.countdownEvent;
+      if (cur && cur.id === ev.id && cur.dateStr === dateStr) {
+        App.clearCountdown();
+      } else {
+        App.setCountdown(dateStr, ev.id, ev.title, ev.time);
+      }
+      Events.render(App.state.selectedDate);
+    });
+    actions.appendChild(cdBtn);
 
     const delBtn = document.createElement('button');
     delBtn.className = 'event-action-btn delete-btn';
