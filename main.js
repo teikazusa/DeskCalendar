@@ -33,22 +33,52 @@ const DEFAULT_DATA = {
 
 function loadData() {
   ensureDataDir();
+  // Try main file first
   try {
     if (fs.existsSync(DATA_FILE)) {
       const raw = fs.readFileSync(DATA_FILE, 'utf-8');
       const data = JSON.parse(raw);
-      return {
-        events: data.events || {},
-        settings: { ...DEFAULT_DATA.settings, ...data.settings },
-      };
+      if (data.events && Object.keys(data.events).length > 0) {
+        return {
+          events: data.events,
+          settings: { ...DEFAULT_DATA.settings, ...data.settings },
+        };
+      }
     }
-  } catch (_) { /* corrupt file — reset */ }
+  } catch (_) { /* corrupt — fall through to backup */ }
+  // Try backup
+  const bak = loadBackup();
+  if (bak) return bak;
   return JSON.parse(JSON.stringify(DEFAULT_DATA));
 }
 
 function saveData(data) {
   ensureDataDir();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  // Backup previous file before overwriting
+  if (fs.existsSync(DATA_FILE)) {
+    fs.copyFileSync(DATA_FILE, DATA_FILE + '.bak');
+  }
+  fs.writeFileSync(DATA_FILE + '.tmp', JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(DATA_FILE + '.tmp', DATA_FILE);
+}
+
+function loadBackup() {
+  const bakFile = DATA_FILE + '.bak';
+  if (fs.existsSync(bakFile)) {
+    try {
+      const raw = fs.readFileSync(bakFile, 'utf-8');
+      const data = JSON.parse(raw);
+      if (data.events && Object.keys(data.events).length > 0) {
+        console.log('Restored data from backup');
+        fs.copyFileSync(bakFile, DATA_FILE); // restore backup as main file
+        return {
+          events: data.events,
+          settings: { ...DEFAULT_DATA.settings, ...data.settings },
+        };
+      }
+    } catch (_) {}
+  }
+  return null;
 }
 
 // ─── Main Window ──────────────────────────────────────────────────────
