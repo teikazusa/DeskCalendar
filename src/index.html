@@ -62,6 +62,9 @@
         <input type="text" id="eventTitle" placeholder="事项标题" maxlength="100" />
         <div class="event-form-row">
           <input type="time" id="eventTime" />
+          <span class="event-time-sep">—</span>
+          <input type="time" id="eventEndTime" />
+          <button type="button" class="time-clear-btn" id="timeClearBtn" title="清除时间">✕</button>
           <div class="color-picker" id="colorPicker"></div>
         </div>
         <textarea id="eventNote" placeholder="备注（可选）" rows="2"></textarea>
@@ -69,6 +72,18 @@
           <button class="btn-secondary" id="cancelEventBtn">取消</button>
           <button class="btn-primary" id="saveEventBtn">保存</button>
           <button class="btn-danger hidden" id="deleteEventBtn">删除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Series Dialog -->
+    <div class="dialog-overlay hidden" id="seriesDialogOverlay"></div>
+    <div class="dialog-panel hidden" id="seriesDialog">
+      <div class="dialog-body">
+        <p class="dialog-msg">该事项属于一个系列，要如何修改？</p>
+        <div class="dialog-actions">
+          <button class="btn-secondary" id="seriesEditSingle">仅修改此项</button>
+          <button class="btn-primary" id="seriesEditFuture">修改此项及之后所有事项</button>
         </div>
       </div>
     </div>

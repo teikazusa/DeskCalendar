@@ -136,10 +136,18 @@ Calendar.render = function () {
           const evEl = document.createElement('span');
           evEl.className = 'cell-event';
           evEl.textContent = ev.title;
-          evEl.title = ev.title + (ev.time ? ' ' + ev.time : '');
+          const timeStr = ev.time ? (ev.endTime ? `${ev.time} - ${ev.endTime}` : ev.time) : '';
+          evEl.title = ev.title + (timeStr ? ' ' + timeStr : '');
           const color = ev.color || '#FF6B6B';
-          evEl.style.background = Calendar.hexToRgba(color, 0.22);
-          evEl.style.borderLeft = `3px solid ${color}`;
+          if (ev.completed) {
+            evEl.style.background = Calendar.hexToRgba(color, 0.08);
+            evEl.style.borderLeft = `3px solid ${color}`;
+            evEl.style.opacity = '0.4';
+            evEl.style.textDecoration = 'line-through';
+          } else {
+            evEl.style.background = Calendar.hexToRgba(color, 0.22);
+            evEl.style.borderLeft = `3px solid ${color}`;
+          }
           cellEvents.appendChild(evEl);
         });
 
@@ -163,6 +171,7 @@ Calendar.render = function () {
           const dot = document.createElement('span');
           dot.className = 'event-dot';
           dot.style.background = ev.color || '#64b5f6';
+          if (ev.completed) dot.style.opacity = '0.25';
           dots.appendChild(dot);
         });
         const remaining = dayEvents.length - maxDots;
@@ -200,6 +209,11 @@ Calendar.render = function () {
             const targetKey = dateStr;
             if (!App.state.data.events[targetKey]) {
               App.state.data.events[targetKey] = [];
+            }
+            // Handle seriesId: create if missing, inherit if exists
+            if (!srcEv.seriesId) {
+              const newSeriesId = App.generateId();
+              srcEv.seriesId = newSeriesId;
             }
             const newEv = { ...srcEv, id: App.generateId() };
             App.state.data.events[targetKey].push(newEv);

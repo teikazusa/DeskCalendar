@@ -181,12 +181,12 @@ App.resizeToFit = async function () {
       contentEnd = padTop + borderY / 2 + titleH + wdH + gridH + 6;
     } else {
       // Has selection: include full event panel
-      // Apply 0.8 shrink only when form is hidden (not adding/editing)
       const formHidden = document.getElementById('eventForm').classList.contains('hidden');
-      const panelH = Math.min(panel.scrollHeight, 220) * (formHidden ? 0.8 : 1);
+      const panelH = Math.min(panel.scrollHeight, 220);
       const panelMt = parseFloat(getComputedStyle(panel).marginTop || 0);
       const gapH = panel.classList.contains('no-selection') ? 0 : panelMt + (panel.classList.contains('no-events') ? 0 : 0);
-      contentEnd = padTop + borderY / 2 + titleH + wdH + gridH + gapH + panelH;
+      const extraBottom = formHidden ? -14 : 0;
+      contentEnd = padTop + borderY / 2 + titleH + wdH + gridH + gapH + panelH + extraBottom;
     }
 
     const totalH = Math.ceil(contentEnd + padBottom + borderY / 2 + 17);

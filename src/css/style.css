@@ -1,7 +1,7 @@
 /* ─── CSS Custom Properties (Themes) ─────────────────────────── */
 :root {
   --bg-primary: rgba(255, 255, 255, 0.2);
-  --bg-secondary: rgba(255, 255, 255, 0);
+  --bg-secondary: rgba(0, 0, 0, 0.02);
   --bg-hover: rgba(255, 255, 255, 0.22);
   --bg-active: rgba(255, 255, 255, 0.28);
   --text-primary: #ffffff;
@@ -512,6 +512,31 @@ body {
   background: var(--bg-hover);
 }
 
+.event-item .event-cb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border: 1.5px solid var(--text-secondary);
+  color: var(--accent);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.event-item .event-cb:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.event-item.completed {
+  opacity: 0.65;
+}
+
 .event-item .event-color-dot {
   width: 10px;
   height: 10px;
@@ -617,8 +642,32 @@ body {
 }
 
 .event-form-row input[type="time"] {
-  width: 110px;
+  width: 100px;
   flex-shrink: 0;
+}
+
+.event-time-sep {
+  color: var(--text-muted);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.time-clear-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.time-clear-btn:hover {
+  color: var(--danger);
+  background: var(--bg-hover);
 }
 
 .color-picker {
@@ -991,6 +1040,50 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .about-text {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* ─── Edit Series Dialog ─────────────────────────────────────── */
+.dialog-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: 30;
+  border-radius: 14px;
+}
+
+.dialog-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-primary);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  z-index: 31;
+  padding: 20px 24px;
+  min-width: 280px;
+  animation: fadeIn 0.15s ease;
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dialog-msg {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ─── Hidden ─────────────────────────────────────────────────── */
