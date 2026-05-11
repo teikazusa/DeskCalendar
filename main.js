@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -83,6 +83,7 @@ function loadBackup() {
 
 // ─── Main Window ──────────────────────────────────────────────────────
 let mainWindow = null;
+let tray = null;
 
 function createWindow() {
   const saved = loadData();
@@ -112,7 +113,12 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+    // If started with --hidden (auto-start), hide to tray instead
+    if (process.argv.includes('--hidden')) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+    }
     tryPinToDesktop();
   });
 
@@ -131,6 +137,51 @@ function createWindow() {
   mainWindow.on('move', saveBounds);
 
   mainWindow.on('closed', () => { mainWindow = null; });
+}
+
+// ─── System Tray ─────────────────────────────────────────────────────
+function createTray() {
+  const iconPath = path.join(__dirname, 'icon.ico');
+  let trayIcon;
+  try {
+    trayIcon = nativeImage.createFromPath(iconPath);
+    trayIcon = trayIcon.resize({ width: 16, height: 16 });
+  } catch (_) {
+    return; // icon not available
+  }
+  tray = new Tray(trayIcon);
+  tray.setToolTip('DeskCalendar');
+
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.focus();
+      } else {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    }
+  });
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: '显示 DeskCalendar',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: '退出',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  tray.setContextMenu(contextMenu);
 }
 
 // ─── Desktop wallpaper integration (WorkerW) ─────────────────────────
@@ -205,7 +256,11 @@ function setupIPC() {
   });
 
   ipcMain.handle('set-autostart', (_e, enable) => {
-    app.setLoginItemSettings({ openAtLogin: enable });
+    app.setLoginItemSettings({
+      openAtLogin: enable,
+      openAsHidden: true,
+      args: ['--hidden'],
+    });
     return true;
   });
 
@@ -216,7 +271,9 @@ function setupIPC() {
   });
 
   ipcMain.handle('window-minimize', () => {
-    mainWindow?.minimize();
+    if (mainWindow) {
+      mainWindow.hide();
+    }
   });
 
   ipcMain.handle('window-resize', (_e, w, h) => {
@@ -232,7 +289,9 @@ function setupIPC() {
   });
 
   ipcMain.handle('window-close', () => {
-    mainWindow?.close();
+    if (mainWindow) {
+      mainWindow.hide();
+    }
   });
 }
 
@@ -251,6 +310,7 @@ if (!gotLock) {
   app.whenReady().then(() => {
     setupIPC();
     createWindow();
+    createTray();
   });
 
   app.on('window-all-closed', () => {
