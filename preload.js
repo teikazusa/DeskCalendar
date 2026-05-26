@@ -11,4 +11,5 @@ contextBridge.exposeInMainWorld('api', {
   getSupabaseConfig: () => ipcRenderer.invoke('get-supabase-config'),
   minimize: () => ipcRenderer.invoke('window-minimize'),
   close: () => ipcRenderer.invoke('window-close'),
+  toggleDevTools: () => ipcRenderer.invoke('toggle-devtools'),
 });

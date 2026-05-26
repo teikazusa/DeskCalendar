@@ -44,6 +44,11 @@ Settings.initUI = function () {
     document.getElementById('aboutVersion').textContent = 'Desk Calendar v' + v;
   });
 
+  // DevTools toggle
+  document.getElementById('devtoolsBtn').addEventListener('click', () => {
+    window.api.toggleDevTools();
+  });
+
   // Autostart
   const autostartCheck = document.getElementById('autostartToggle');
   window.api.getAutostart().then(enabled => {

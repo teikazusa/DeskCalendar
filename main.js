@@ -294,6 +294,10 @@ function setupIPC() {
     return { width: b.width, height: b.height };
   });
 
+  ipcMain.handle('toggle-devtools', () => {
+    if (mainWindow) mainWindow.webContents.toggleDevTools();
+  });
+
   ipcMain.handle('window-close', () => {
     if (mainWindow) {
       mainWindow.hide();
