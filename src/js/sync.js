@@ -10,13 +10,11 @@ Sync.init = async function () {
   try {
     const cfg = await window.api.getSupabaseConfig();
     if (!cfg.url || !cfg.key) {
-      console.log('Sync not configured');
       return;
     }
     _url = cfg.url;
     _key = cfg.key;
     Sync.ready = true;
-    console.log('Sync ready, pulling...');
     Sync._pull(); // pull latest on startup
     Sync._startRealtime();
   } catch (e) { console.log('[Sync] Init error:', e.message); }
@@ -99,8 +97,7 @@ Sync._pull = async function () {
   try {
     const res = await supabaseFetch('/events?deleted_at=is.null&select=*');
     const rows = await res.json();
-    if (!rows || !rows.length) { console.log('Sync pull: no remote events'); return; }
-    console.log('Sync pull: got ' + rows.length + ' events');
+    if (!rows || !rows.length) return;
     const remote = {};
     rows.forEach(r => {
       const ev = camelKeys(r);

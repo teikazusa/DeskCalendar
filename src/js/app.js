@@ -80,7 +80,6 @@ App.init = async function () {
   Events.render(App.state.selectedDate);
   Settings.initUI();
   App.resizeToFit();
-  console.log('App started, calling Sync...');
   Sync.init();
 
   // Restore saved countdown if event still exists
