@@ -80,6 +80,7 @@
 <div class="menu-bar">
   <button class="menu-btn on" id="btnCompact" onclick="setMode('compact')">紧凑</button>
   <button class="menu-btn" id="btnOverview" onclick="setMode('overview')">总览</button>
+  <button class="menu-btn" id="btnWeekStart" onclick="toggleWeekStart()">周一</button>
   <span style="flex:1"></span>
   <span class="sync-status" id="syncStatus"></span>
   <button class="menu-btn" onclick="goToday()">今天</button>
@@ -112,7 +113,7 @@ const SB_KEY = 'sb_publishable_u0tJSbkfo4h8PgAJHFSXtQ_BEVRfx4S';
 
 // ─── State ────────────────────────────────────────
 const COLORS = ['#FF3B30','#FF9500','#FFCC00','#34C759','#007AFF','#AF52DE','#8E8E93','#5AC8FA'];
-let state = { year: 0, month: 0, selected: '', editingId: null, mode: 'compact' };
+let state = { year: 0, month: 0, selected: '', editingId: null, mode: 'compact', weekStart: 'monday', lang: 'zh' };
 let events = {};
 let syncReady = false;
 
@@ -192,15 +193,26 @@ function saveLocal() { localStorage.setItem('deskcal', JSON.stringify({ events }
 // ─── Calendar ─────────────────────────────────────
 function fmtDate(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 
+function toggleWeekStart() {
+  state.weekStart = state.weekStart === 'monday' ? 'sunday' : 'monday';
+  document.getElementById('btnWeekStart').textContent = state.weekStart === 'monday' ? '周一' : '周日';
+  render();
+}
+
 function render() {
   const y = state.year, m = state.month;
   document.getElementById('monthTitle').textContent = `${y}年${m+1}月`;
 
-  const wd = ['一','二','三','四','五','六','日'];
-  document.getElementById('weekday').innerHTML = wd.map((d,i) => `<span${i>=5?' class="we"':''}>${d}</span>`).join('');
+  // Weekday header
+  let wd = ['一','二','三','四','五','六','日'];
+  if (state.weekStart === 'sunday') wd = ['日','一','二','三','四','五','六'];
+  const wkEnd = state.weekStart === 'sunday' ? [0,6] : [5,6];
+  document.getElementById('weekday').innerHTML = wd.map((d,i) => `<span${wkEnd.includes(i)?' class="we"':''}>${d}</span>`).join('');
 
+  // Grid offset
   const first = new Date(y,m,1);
-  let off = first.getDay()-1; if (off<0) off=6;
+  let off = state.weekStart === 'sunday' ? first.getDay() : first.getDay()-1;
+  if (off<0) off=6;
   const daysIn = new Date(y,m+1,0).getDate();
   const today = fmtDate(new Date());
 
