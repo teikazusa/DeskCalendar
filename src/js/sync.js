@@ -16,6 +16,7 @@ Sync.init = async function () {
     _key = cfg.key;
     Sync.ready = true;
     Sync._pull(); // pull latest on startup
+    Sync._uploadAllLocal(); // upload any locally-created events that aren't synced yet
     Sync._startRealtime();
   } catch (e) { console.log('[Sync] Init error:', e.message); }
 };
@@ -89,6 +90,21 @@ Sync.markDeleted = async function (evId) {
       body: JSON.stringify({ deleted_at: new Date().toISOString() }),
     });
   } catch (e) { console.log('[Sync] markDeleted:', e.message); }
+};
+
+Sync._uploadAllLocal = async function () {
+  if (!Sync.ready) return;
+  const local = App.state.data.events || {};
+  const allDates = Object.keys(local);
+  if (allDates.length === 0) return;
+  let count = 0;
+  for (const d of allDates) {
+    for (const ev of (local[d] || [])) {
+      await Sync.upsertEvent(d, ev);
+      count++;
+    }
+  }
+  console.log('Sync: uploaded ' + count + ' local events');
 };
 
 // ─── Pull ───────────────────────────────────────────────────────
