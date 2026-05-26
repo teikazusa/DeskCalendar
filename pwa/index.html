@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#12121e" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>DeskCalendar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #12121e;
+      color: #fff;
+      padding: 8px;
+      max-width: 480px;
+      margin: 0 auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 12px; }
+    .month-title { font-size: 20px; font-weight: 600; }
+    .nav-btn { background: none; border: none; color: #fff; font-size: 18px; padding: 8px 12px; cursor: pointer; }
+    .weekday { display: grid; grid-template-columns: repeat(7,1fr); text-align: center; font-size: 12px; color: rgba(255,255,255,0.5); padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .weekday .we { color: rgba(255,255,255,0.25); }
+    .grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+    .cell {
+      aspect-ratio: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500;
+      position: relative;
+    }
+    .cell.other { color: rgba(255,255,255,0.2); }
+    .cell.today { border: 1px solid #64b5f6; background: rgba(100,181,246,0.15); }
+    .cell.selected { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); }
+    .dots { display: flex; gap: 2px; position: absolute; bottom: 4px; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; }
+    .cell.other .dots { display: none; }
+    .panel { margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px; display: none; }
+    .panel.show { display: block; }
+    .panel-date { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+    .event-item {
+      display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+      background: rgba(0,0,0,0.2); border-radius: 10px; margin-bottom: 4px;
+      border-left: 3px solid #64b5f6;
+    }
+    .event-item.done { opacity: 0.5; }
+    .event-item.done .ev-title { text-decoration: line-through; }
+    .ev-cb { width: 20px; height: 20px; border: 1.5px solid rgba(255,255,255,0.4); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+    .ev-title { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ev-time { font-size: 13px; color: rgba(255,255,255,0.6); }
+    .ev-del { background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 16px; padding: 4px; }
+    .add-btn { display: block; width: 100%; background: rgba(100,181,246,0.15); border: 1px dashed rgba(100,181,246,0.3); color: #64b5f6; font-size: 14px; padding: 10px; border-radius: 10px; cursor: pointer; margin-top: 8px; }
+    .form { display: none; background: rgba(0,0,0,0.25); border-radius: 12px; padding: 14px; margin-top: 8px; }
+    .form.show { display: block; }
+    .form input, .form textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; margin-bottom: 8px; font-family: inherit; }
+    .form-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .form-row input[type=time] { width: 90px; margin-bottom: 0; flex-shrink: 0; }
+    .colors { display: flex; gap: 5px; flex: 1; flex-wrap: wrap; }
+    .col { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+    .col.sel { border-color: #fff; }
+    .btn { background: #64b5f6; color: #fff; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 6px; }
+    .btn-sec { background: rgba(255,255,255,0.1); }
+    .btn-del { background: transparent; color: #ef5350; border: 1px solid #ef5350; }
+    .btn-row { display: flex; gap: 6px; margin-top: 4px; }
+    .sync-status { text-align: center; font-size: 10px; color: rgba(255,255,255,0.3); padding: 4px; }
+    .menu-bar { display: flex; gap: 6px; align-items: center; }
+    .menu-btn { background: rgba(255,255,255,0.06); border: none; color: rgba(255,255,255,0.5); font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+    .menu-btn.on { color: #64b5f6; }
+  </style>
+</head>
+<body>
+<div class="header">
+  <button class="nav-btn" onclick="prevMonth()">&#9664;</button>
+  <span class="month-title" id="monthTitle"></span>
+  <button class="nav-btn" onclick="nextMonth()">&#9654;</button>
+</div>
+<div class="menu-bar">
+  <button class="menu-btn on" id="btnCompact" onclick="setMode('compact')">紧凑</button>
+  <button class="menu-btn" id="btnOverview" onclick="setMode('overview')">总览</button>
+  <span style="flex:1"></span>
+  <span class="sync-status" id="syncStatus"></span>
+  <button class="menu-btn" onclick="goToday()">今天</button>
+</div>
+<div class="weekday" id="weekday"></div>
+<div class="grid" id="grid"></div>
+<div class="panel" id="panel">
+  <div class="panel-date" id="panelDate"></div>
+  <div id="eventList"></div>
+  <button class="add-btn" id="addBtn" onclick="showForm()">+ 添加事项</button>
+  <div class="form" id="form">
+    <input type="text" id="evTitle" placeholder="事项标题" maxlength="100" />
+    <div class="form-row">
+      <input type="time" id="evTime" /><span style="color:#666">-</span><input type="time" id="evEndTime" />
+      <div class="colors" id="colors"></div>
+    </div>
+    <textarea id="evNote" placeholder="备注（可选）" rows="2"></textarea>
+    <div class="btn-row">
+      <button class="btn" id="saveBtn" onclick="saveEvent()">保存</button>
+      <button class="btn btn-sec" onclick="cancelForm()">取消</button>
+      <button class="btn btn-del" id="delBtn" style="display:none" onclick="deleteEvent()">删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Supabase Config ──────────────────────────────
+const SB_URL = 'https://nkuscmewvihltgolinss.supabase.co';
+const SB_KEY = 'sb_publishable_u0tJSbkfo4h8PgAJHFSXtQ_BEVRfx4S';
+
+// ─── State ────────────────────────────────────────
+const COLORS = ['#FF3B30','#FF9500','#FFCC00','#34C759','#007AFF','#AF52DE','#8E8E93','#5AC8FA'];
+let state = { year: 0, month: 0, selected: '', editingId: null, mode: 'compact' };
+let events = {};
+let syncReady = false;
+
+// ─── Init ─────────────────────────────────────────
+function init() {
+  const now = new Date();
+  state.year = now.getFullYear();
+  state.month = now.getMonth();
+  state.selected = fmtDate(now);
+
+  // Load local
+  try { const d = JSON.parse(localStorage.getItem('deskcal')||'{}'); events = d.events||{}; } catch(_) {}
+
+  loadFromSupabase();
+  render();
+  document.getElementById('evTitle').addEventListener('keydown', e => { if (e.key==='Enter') saveEvent(); });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+}
+init();
+
+// ─── Supabase ─────────────────────────────────────
+async function sbFetch(path, opts={}) {
+  const res = await fetch(SB_URL+'/rest/v1'+path, {
+    ...opts,
+    headers: { apikey:SB_KEY, Authorization:'Bearer '+SB_KEY, 'Content-Type':'application/json', ...(opts.headers||{}) }
+  });
+  if (!res.ok) { console.log('SB', res.status, await res.text()); throw new Error(res.status); }
+  return res;
+}
+
+async function loadFromSupabase() {
+  try {
+    const res = await sbFetch('/events?deleted_at=is.null&select=*');
+    const rows = await res.json();
+    if (!rows || !rows.length) return;
+    const remote = {};
+    rows.forEach(r => {
+      const d = r.date;
+      if (!remote[d]) remote[d] = [];
+      remote[d].push({ id:r.id, title:r.title, time:r.time||null, endTime:r.end_time||null, color:r.color||null, note:r.note||null, completed:r.completed||false, seriesId:r.series_id||null, updatedAt:r.updated_at||'0' });
+    });
+    // Merge with local
+    for (const d of Object.keys(remote)) {
+      if (!events[d]) { events[d] = remote[d]; continue; }
+      const map = new Map(events[d].map(e => [e.id,e]));
+      remote[d].forEach(e => {
+        const le = map.get(e.id);
+        if (!le || (e.updatedAt||'0') > (le.updatedAt||'0')) map.set(e.id, {...le||{}, ...e});
+      });
+      events[d] = Array.from(map.values());
+    }
+    saveLocal();
+    syncReady = true;
+    document.getElementById('syncStatus').textContent = '已同步';
+    render();
+  } catch(e) { document.getElementById('syncStatus').textContent = '离线'; }
+}
+
+async function upsertEvent(dateStr, ev) {
+  if (!syncReady) return;
+  try {
+    await sbFetch('/events?on_conflict=id', {
+      method: 'POST',
+      body: JSON.stringify({ id:ev.id, date:dateStr, title:ev.title, time:ev.time||null, end_time:ev.endTime||null, color:ev.color||null, note:ev.note||null, completed:ev.completed||false, series_id:ev.seriesId||null, updated_at:new Date().toISOString() }),
+      headers: { Prefer:'resolution=merge-duplicates' }
+    });
+  } catch(_) {}
+}
+
+async function markDeleted(evId) {
+  if (!syncReady) return;
+  try { await sbFetch(`/events?id=eq.${evId}`, { method:'PATCH', body:JSON.stringify({ deleted_at:new Date().toISOString() }) }); } catch(_) {}
+}
+
+function saveLocal() { localStorage.setItem('deskcal', JSON.stringify({ events })); }
+
+// ─── Calendar ─────────────────────────────────────
+function fmtDate(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function render() {
+  const y = state.year, m = state.month;
+  document.getElementById('monthTitle').textContent = `${y}年${m+1}月`;
+
+  const wd = ['一','二','三','四','五','六','日'];
+  document.getElementById('weekday').innerHTML = wd.map((d,i) => `<span${i>=5?' class="we"':''}>${d}</span>`).join('');
+
+  const first = new Date(y,m,1);
+  let off = first.getDay()-1; if (off<0) off=6;
+  const daysIn = new Date(y,m+1,0).getDate();
+  const today = fmtDate(new Date());
+
+  let html = '';
+  for (let i=0; i<off; i++) html += '<div class="cell other"><span></span></div>';
+  for (let d=1; d<=daysIn; d++) {
+    const ds = fmtDate(new Date(y,m,d));
+    const cls = ['cell'];
+    if (ds===today) cls.push('today');
+    if (ds===state.selected) cls.push('selected');
+    const dayEv = events[ds]||[];
+    html += `<div class="${cls.join(' ')}" data-d="${ds}" onclick="selectDate('${ds}')">
+      <span>${d}</span>`;
+    if (state.mode==='compact') {
+      const show = dayEv.slice(0,3);
+      html += '<div class="dots">' + show.map(e => `<span class="dot" style="background:${e.color||'#64b5f6'};opacity:${e.completed?0.3:1}"></span>`).join('') + '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('grid').innerHTML = html;
+  renderPanel();
+}
+
+function selectDate(ds) { state.selected = ds; render(); }
+function prevMonth() { state.month--; if (state.month<0){state.month=11;state.year--;} render(); }
+function nextMonth() { state.month++; if (state.month>11){state.month=0;state.year++;} render(); }
+function goToday() { const n=new Date(); state.year=n.getFullYear(); state.month=n.getMonth(); state.selected=fmtDate(n); render(); }
+function setMode(m) { state.mode=m; document.getElementById('btnCompact').classList.toggle('on',m==='compact'); document.getElementById('btnOverview').classList.toggle('on',m==='overview'); render(); }
+
+// ─── Events ───────────────────────────────────────
+function renderPanel() {
+  const ds = state.selected;
+  const panel = document.getElementById('panel');
+  if (!ds) { panel.classList.remove('show'); return; }
+  panel.classList.add('show');
+  const d = new Date(ds); d.setMinutes(d.getMinutes()+d.getTimezoneOffset());
+  document.getElementById('panelDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${['日','一','二','三','四','五','六'][d.getDay()]}`;
+  const list = (events[ds]||[]).sort((a,b)=>(a.time||'')>(b.time||'')?1:-1);
+  const el = document.getElementById('eventList');
+  el.innerHTML = list.map(e => `
+    <div class="event-item${e.completed?' done':''}" style="border-left-color:${e.color||'#64b5f6'}">
+      <div class="ev-cb" onclick="toggleDone('${ds}','${e.id}')">${e.completed?'✓':''}</div>
+      <span class="ev-title">${esc(e.title)}</span>
+      ${e.time?`<span class="ev-time">${e.time}${e.endTime?' - '+e.endTime:''}</span>`:''}
+      <button class="ev-del" onclick="editEvent('${ds}','${e.id}')">&#9998;</button>
+      <button class="ev-del" onclick="removeEvent('${ds}','${e.id}')">&#10005;</button>
+    </div>
+  `).join('');
+  if (list.length===0) el.innerHTML = '<div style="text-align:center;color:#444;padding:16px">暂无事项</div>';
+}
+
+function esc(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function showForm(eventId) {
+  const form = document.getElementById('form');
+  form.classList.add('show');
+  document.getElementById('evNote').value = '';
+  document.getElementById('delBtn').style.display = 'none';
+
+  // Colors
+  document.getElementById('colors').innerHTML = COLORS.map((c,i) =>
+    `<div class="col${i===0?' sel':''}" style="background:${c}" onclick="selectColor(this)" data-c="${c}"></div>`
+  ).join('');
+
+  if (eventId) {
+    const ev = (events[state.selected]||[]).find(e=>e.id===eventId);
+    if (!ev) return;
+    state.editingId = eventId;
+    document.getElementById('evTitle').value = ev.title||'';
+    document.getElementById('evTime').value = ev.time||'';
+    document.getElementById('evEndTime').value = ev.endTime||'';
+    document.getElementById('evNote').value = ev.note||'';
+    document.getElementById('delBtn').style.display = '';
+  } else {
+    state.editingId = null;
+    document.getElementById('evTitle').value = '';
+    document.getElementById('evTime').value = '';
+    document.getElementById('evEndTime').value = '';
+  }
+  document.getElementById('evTitle').focus();
+}
+
+function cancelForm() {
+  document.getElementById('form').classList.remove('show');
+  state.editingId = null;
+}
+
+function selectColor(el) { document.querySelectorAll('.col').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+
+function saveEvent() {
+  const ds = state.selected;
+  if (!ds) return;
+  const title = document.getElementById('evTitle').value.trim();
+  if (!title) return document.getElementById('evTitle').focus();
+  const color = (document.querySelector('.col.sel')||{}).dataset?.c || COLORS[0];
+  const time = document.getElementById('evTime').value;
+  const endTime = document.getElementById('evEndTime').value;
+  const note = document.getElementById('evNote').value;
+
+  if (!events[ds]) events[ds] = [];
+
+  if (state.editingId) {
+    const idx = events[ds].findIndex(e=>e.id===state.editingId);
+    if (idx!==-1) events[ds][idx] = {...events[ds][idx], title,time,endTime,color,note};
+  } else {
+    events[ds].push({ id:'ev_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), title,time,endTime,color,note,completed:false });
+  }
+
+  saveLocal();
+  upsertEvent(ds, events[ds].find(e => e.id===state.editingId || e.id===events[ds][events[ds].length-1].id));
+  cancelForm();
+  render();
+}
+
+function toggleDone(ds, id) {
+  const ev = (events[ds]||[]).find(e=>e.id===id);
+  if (!ev) return;
+  ev.completed = !ev.completed;
+  saveLocal();
+  upsertEvent(ds, ev);
+  render();
+}
+
+function editEvent(ds, id) { state.selected = ds; renderPanel(); showForm(id); }
+
+function removeEvent(ds, id) {
+  events[ds] = (events[ds]||[]).filter(e=>e.id!==id);
+  if (!events[ds].length) delete events[ds];
+  saveLocal();
+  markDeleted(id);
+  render();
+}
+
+function clearTime() { document.getElementById('evTime').value=''; document.getElementById('evEndTime').value=''; }
+</script>
+</body>
+</html>
