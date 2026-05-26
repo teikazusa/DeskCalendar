@@ -79,6 +79,7 @@ Events.render = function (dateStr) {
       e.stopPropagation();
       ev.completed = !isDone;
       App.saveData();
+      Sync.upsertEvent(dateStr, ev);
       window.Calendar.render();
       Events.render(dateStr);
     });
@@ -329,6 +330,22 @@ Events.saveEvent = function () {
     return 0;
   });
 
+  // Sync saved event(s) to Supabase
+  const savedEvents = App.state.data.events[dateStr] || [];
+  const savedId = App.state.editingEventId || id;
+  const savedEv = savedEvents.find(e => e.id === savedId);
+  if (savedEv) Sync.upsertEvent(dateStr, savedEv);
+  // If future-update, sync all changed events in the series
+  if (_seriesEditScope === 'future' && (savedEv ? savedEv.seriesId : null)) {
+    const sid = savedEv.seriesId;
+    Object.keys(App.state.data.events).forEach(ds => {
+      if (ds === dateStr) return;
+      (App.state.data.events[ds] || []).forEach(e => {
+        if (e.seriesId === sid) Sync.upsertEvent(ds, e);
+      });
+    });
+  }
+
   App.saveData();
   Events.cancelForm();
   Calendar.render();
@@ -359,6 +376,7 @@ Events.cancelForm = function () {
 // ─── Delete event ──────────────────────────────────────────────
 Events.deleteEvent = function (dateStr, eventId) {
   if (!dateStr || !eventId) return;
+  Sync.markDeleted(eventId);
   const events = App.state.data.events[dateStr] || [];
   App.state.data.events[dateStr] = events.filter(e => e.id !== eventId);
   if (App.state.data.events[dateStr].length === 0) {

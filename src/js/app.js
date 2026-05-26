@@ -80,6 +80,7 @@ App.init = async function () {
   Events.render(App.state.selectedDate);
   Settings.initUI();
   App.resizeToFit();
+  Sync.init();
 
   // Restore saved countdown if event still exists
   const savedCd = App.state.data.settings._savedCountdown;

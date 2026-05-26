@@ -224,6 +224,7 @@ Calendar.render = function () {
               return 0;
             });
             App.saveData();
+            Sync.upsertEvent(targetKey, newEv);
             Calendar.render();
             window.Events.render(App.state.selectedDate);
           }

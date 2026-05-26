@@ -18,5 +18,9 @@
   "devDependencies": {
     "electron": "^42.0.0",
     "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2",
+    "dotenv": "^17.4.2"
   }
 }

@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('api', {
   setAutostart: (enable) => ipcRenderer.invoke('set-autostart', enable),
   resizeWindow: (w, h) => ipcRenderer.invoke('window-resize', w, h),
   getWindowSize: () => ipcRenderer.invoke('window-get-size'),
+  getSupabaseConfig: () => ipcRenderer.invoke('get-supabase-config'),
   minimize: () => ipcRenderer.invoke('window-minimize'),
   close: () => ipcRenderer.invoke('window-close'),
 });

@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
 
 // ─── Paths ─────────────────────────────────────────────────────────────
 const DATA_DIR = path.join(app.getPath('userData'), 'data');
@@ -265,6 +266,11 @@ function setupIPC() {
   });
 
   ipcMain.handle('get-app-version', () => app.getVersion());
+
+  ipcMain.handle('get-supabase-config', () => ({
+    url: process.env.SUPABASE_URL || '',
+    key: process.env.SUPABASE_ANON_KEY || '',
+  }));
 
   ipcMain.handle('get-theme', () => {
     return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
