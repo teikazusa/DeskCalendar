@@ -1,4 +1,4 @@
-// ─── Global Application State & Init ───────────────────────────
+﻿// ─── Global Application State & Init ───────────────────────────
 const App = {
   state: {
     data: { events: {}, settings: {} },
@@ -24,7 +24,7 @@ App.parseDate = function (str) {
 };
 
 App.formatMonthTitle = function (year, month) {
-  return `${year}�?{month + 1}月`;
+  return `${year}�?{month + 1}月`;
 };
 
 App.getToday = function () {
@@ -100,6 +100,7 @@ App.init = async function () {
   document.getElementById('settingsOverlay').addEventListener('click', Settings.toggle);
 
   // Mode toggle button in title bar
+    document.getElementById('syncBtn').addEventListener('click', () => Sync._pull());
   App.updateModeToggleBtn();
   document.getElementById('modeToggleBtn').addEventListener('click', async () => {
     const s = App.state.data.settings;
@@ -124,7 +125,8 @@ App.init = async function () {
 
     s.displayMode = goingCompact ? 'compact' : 'overview';
     App.saveData();
-    App.updateModeToggleBtn();
+      document.getElementById('syncBtn').addEventListener('click', () => Sync._pull());
+  App.updateModeToggleBtn();
     window.Calendar.render();
     window.Events.render(App.state.selectedDate);
     App.resizeToFit();
@@ -235,7 +237,7 @@ App.updateCountdownDisplay = function () {
   const diff = target - now;
 
   if (diff <= 0) {
-    text.textContent = `�?{ev.title}」已到期`;
+    text.textContent = `�?{ev.title}」已到期`;
     bar.classList.remove('hidden');
     return;
   }
@@ -247,11 +249,11 @@ App.updateCountdownDisplay = function () {
 
   let display;
   if (days > 0) {
-    display = `距离�?{ev.title}」还�?${days} �?${hours} 小时 ${minutes} 分`;
+    display = `距离�?{ev.title}」还�?${days} �?${hours} 小时 ${minutes} 分`;
   } else if (hours > 0) {
-    display = `距离�?{ev.title}」还�?${hours} 小时 ${minutes} 分`;
+    display = `距离�?{ev.title}」还�?${hours} 小时 ${minutes} 分`;
   } else {
-    display = `距离�?{ev.title}」还�?${minutes} 分`;
+    display = `距离�?{ev.title}」还�?${minutes} 分`;
   }
   text.textContent = display;
   bar.classList.remove('hidden');
