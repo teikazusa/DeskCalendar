@@ -299,9 +299,7 @@ function setupIPC() {
   });
 
   ipcMain.handle('window-close', () => {
-    if (mainWindow) {
-      mainWindow.hide();
-    }
+    app.quit();
   });
 }
 
