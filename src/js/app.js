@@ -225,7 +225,7 @@ App.updateCountdownDisplay = function () {
   const diff = target - now;
 
   if (diff <= 0) {
-    text.textContent = '[' + ev.title + '] expired';
+    text.textContent = '「' + ev.title + '」已到期';
     bar.classList.remove('hidden');
     return;
   }
@@ -237,11 +237,11 @@ App.updateCountdownDisplay = function () {
 
   let display;
   if (days > 0) {
-    display = days + 'd ' + hours + 'h ' + minutes + 'm until ' + ev.title;
+    display = '距离「' + ev.title + '」还有 ' + days + ' 天 ' + hours + ' 小时 ' + minutes + ' 分';
   } else if (hours > 0) {
-    display = hours + 'h ' + minutes + 'm until ' + ev.title;
+    display = '距离「' + ev.title + '」还有 ' + hours + ' 小时 ' + minutes + ' 分';
   } else {
-    display = minutes + 'm until ' + ev.title;
+    display = '距离「' + ev.title + '」还有 ' + minutes + ' 分';
   }
   text.textContent = display;
   bar.classList.remove('hidden');
@@ -261,7 +261,7 @@ App.refreshCountdownVisibility = function () {
 App.updateModeToggleBtn = function () {
   const mode = App.state.data.settings.displayMode || 'compact';
   const btn = document.getElementById('modeToggleBtn');
-  if (btn) btn.textContent = mode === 'overview' ? 'overview' : 'compact';
+  if (btn) btn.textContent = mode === 'overview' ? '总览' : '紧凑';
 };
 
 // ─── Font Size ──────────────────────────────────────────────────
