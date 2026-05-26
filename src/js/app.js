@@ -24,7 +24,7 @@ App.parseDate = function (str) {
 };
 
 App.formatMonthTitle = function (year, month) {
-  return `${year}年${month + 1}月`;
+  return `${year}�?{month + 1}月`;
 };
 
 App.getToday = function () {
@@ -80,6 +80,7 @@ App.init = async function () {
   Events.render(App.state.selectedDate);
   Settings.initUI();
   App.resizeToFit();
+  console.log('App started, calling Sync...');
   Sync.init();
 
   // Restore saved countdown if event still exists
@@ -235,7 +236,7 @@ App.updateCountdownDisplay = function () {
   const diff = target - now;
 
   if (diff <= 0) {
-    text.textContent = `「${ev.title}」已到期`;
+    text.textContent = `�?{ev.title}」已到期`;
     bar.classList.remove('hidden');
     return;
   }
@@ -247,11 +248,11 @@ App.updateCountdownDisplay = function () {
 
   let display;
   if (days > 0) {
-    display = `距离「${ev.title}」还有 ${days} 天 ${hours} 小时 ${minutes} 分`;
+    display = `距离�?{ev.title}」还�?${days} �?${hours} 小时 ${minutes} 分`;
   } else if (hours > 0) {
-    display = `距离「${ev.title}」还有 ${hours} 小时 ${minutes} 分`;
+    display = `距离�?{ev.title}」还�?${hours} 小时 ${minutes} 分`;
   } else {
-    display = `距离「${ev.title}」还有 ${minutes} 分`;
+    display = `距离�?{ev.title}」还�?${minutes} 分`;
   }
   text.textContent = display;
   bar.classList.remove('hidden');
