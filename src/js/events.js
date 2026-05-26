@@ -330,23 +330,24 @@ Events.saveEvent = function () {
     return 0;
   });
 
+  App.saveData();
+
   // Sync saved event(s) to Supabase
   const savedEvents = App.state.data.events[dateStr] || [];
-  const savedId = App.state.editingEventId || id;
-  const savedEv = savedEvents.find(e => e.id === savedId);
-  if (savedEv) Sync.upsertEvent(dateStr, savedEv);
-  // If future-update, sync all changed events in the series
-  if (_seriesEditScope === 'future' && (savedEv ? savedEv.seriesId : null)) {
-    const sid = savedEv.seriesId;
-    Object.keys(App.state.data.events).forEach(ds => {
-      if (ds === dateStr) return;
-      (App.state.data.events[ds] || []).forEach(e => {
-        if (e.seriesId === sid) Sync.upsertEvent(ds, e);
+  const evId = App.state.editingEventId || (savedEvents.length > 0 ? savedEvents[savedEvents.length - 1].id : null);
+  if (evId) {
+    const savedEv = savedEvents.find(e => e.id === evId);
+    if (savedEv) Sync.upsertEvent(dateStr, savedEv);
+    if (_seriesEditScope === 'future' && (savedEv ? savedEv.seriesId : null)) {
+      const sid = savedEv.seriesId;
+      Object.keys(App.state.data.events).forEach(ds => {
+        if (ds === dateStr) return;
+        (App.state.data.events[ds] || []).forEach(e => {
+          if (e.seriesId === sid) Sync.upsertEvent(ds, e);
+        });
       });
-    });
+    }
   }
-
-  App.saveData();
   Events.cancelForm();
   Calendar.render();
   Events.render(dateStr);
