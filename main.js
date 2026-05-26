@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 
 // ─── Paths ─────────────────────────────────────────────────────────────
 const DATA_DIR = path.join(app.getPath('userData'), 'data');

@@ -9,11 +9,14 @@ let _reconnectTimer = null;
 Sync.init = async function () {
   try {
     const cfg = await window.api.getSupabaseConfig();
-    if (!cfg.url || !cfg.key) return;
+    if (!cfg.url || !cfg.key) {
+      console.log('Sync not configured');
+      return;
+    }
     _url = cfg.url;
     _key = cfg.key;
     Sync.ready = true;
-    console.log('[Sync] Ready');
+    console.log('Sync ready, pulling...');
     Sync._pull(); // pull latest on startup
     Sync._startRealtime();
   } catch (e) { console.log('[Sync] Init error:', e.message); }
@@ -59,7 +62,11 @@ async function supabaseFetch(path, opts = {}) {
       ...(opts.headers || {}),
     },
   });
-  if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
+  if (!res.ok) {
+    const errText = await res.text();
+    console.log('[Sync] fetch error:', res.status, errText);
+    throw new Error(res.status + ' ' + errText);
+  }
   return res;
 }
 
@@ -92,7 +99,8 @@ Sync._pull = async function () {
   try {
     const res = await supabaseFetch('/events?deleted_at=is.null&select=*');
     const rows = await res.json();
-    if (!rows || !rows.length) return;
+    if (!rows || !rows.length) { console.log('Sync pull: no remote events'); return; }
+    console.log('Sync pull: got ' + rows.length + ' events');
     const remote = {};
     rows.forEach(r => {
       const ev = camelKeys(r);
@@ -104,7 +112,7 @@ Sync._pull = async function () {
     App.saveData();
     window.Calendar && window.Calendar.render();
     window.Events && window.Events.render(App.state.selectedDate);
-  } catch (e) { console.log('[Sync] pull:', e.message); }
+  } catch (e) { console.log('Sync pull error:', e.message); }
 };
 
 Sync._merge = function (local, remote) {
