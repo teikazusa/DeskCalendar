@@ -1,4 +1,4 @@
-﻿// ─── Global Application State & Init ───────────────────────────
+// ─── Global Application State & Init ───────────────────────────
 const App = {
   state: {
     data: { events: {}, settings: {} },
@@ -24,7 +24,7 @@ App.parseDate = function (str) {
 };
 
 App.formatMonthTitle = function (year, month) {
-  return `${year}�?{month + 1}月`;
+  return `${year}年${month + 1}月`;
 };
 
 App.getToday = function () {
@@ -99,22 +99,19 @@ App.init = async function () {
   document.getElementById('closeSettingsBtn').addEventListener('click', Settings.toggle);
   document.getElementById('settingsOverlay').addEventListener('click', Settings.toggle);
 
-  // Mode toggle button in title bar
-    document.getElementById('syncBtn').addEventListener('click', () => Sync._pull());
+  document.getElementById('syncBtn').addEventListener('click', () => Sync._pull());
   App.updateModeToggleBtn();
   document.getElementById('modeToggleBtn').addEventListener('click', async () => {
     const s = App.state.data.settings;
     const goingCompact = s.displayMode === 'overview';
 
     if (goingCompact) {
-      // Save overview width, then resize to compact
       try {
         const cur = await window.api.getWindowSize();
         s._overviewWidth = cur.width;
         await window.api.resizeWindow(380, cur.height);
       } catch (_) {}
     } else {
-      // Restore overview width
       try {
         const cur = await window.api.getWindowSize();
         const restoreW = s._overviewWidth || 420;
@@ -125,12 +122,10 @@ App.init = async function () {
 
     s.displayMode = goingCompact ? 'compact' : 'overview';
     App.saveData();
-      document.getElementById('syncBtn').addEventListener('click', () => Sync._pull());
-  App.updateModeToggleBtn();
+    App.updateModeToggleBtn();
     window.Calendar.render();
     window.Events.render(App.state.selectedDate);
     App.resizeToFit();
-    App.refreshCountdownVisibility();
   });
 
   // Clear date selection when window loses focus
@@ -138,7 +133,6 @@ App.init = async function () {
     if (App.state.selectedDate) {
       App.state.selectedDate = null;
       window.Calendar.render();
-      // Always show today's events in panel when nothing selected
       const today = App.getToday();
       const hasToday = (App.state.data.events || {})[today.str]?.length > 0;
       if (hasToday) {
@@ -156,7 +150,6 @@ App.init = async function () {
 // ─── Window auto-resize ────────────────────────────────────────
 App.resizeToFit = async function () {
   try {
-    // Get actual current window width (never change it)
     let w = 380;
     try { w = (await window.api.getWindowSize()).width; } catch (_) { w = App.state.data.settings.width || 380; }
     const container = document.querySelector('.app-container');
@@ -168,22 +161,17 @@ App.resizeToFit = async function () {
     const padBottom = parseFloat(cStyle.paddingBottom);
     const borderY = parseFloat(cStyle.borderTopWidth) + parseFloat(cStyle.borderBottomWidth);
 
-    // Title + weekday fixed height
     const titleH = document.querySelector('.title-bar').offsetHeight +
       parseFloat(getComputedStyle(document.querySelector('.title-bar')).marginBottom || 0);
     const wdH = document.querySelector('.weekday-header').offsetHeight +
       parseFloat(getComputedStyle(document.querySelector('.weekday-header')).marginBottom || 0);
 
-    // Grid content height
     const gridH = grid.scrollHeight;
 
-    // Calculate bottom based on selection state
     let contentEnd;
     if (!App.state.selectedDate) {
-      // No selection: end right after grid + small gap
       contentEnd = padTop + borderY / 2 + titleH + wdH + gridH + 6;
     } else {
-      // Has selection: include full event panel
       const formHidden = document.getElementById('eventForm').classList.contains('hidden');
       const panelH = Math.min(panel.scrollHeight, 220);
       const panelMt = parseFloat(getComputedStyle(panel).marginTop || 0);
@@ -223,7 +211,7 @@ App.clearCountdown = function () {
 
 App._startCountdownTimer = function () {
   if (App._countdownTimer) clearInterval(App._countdownTimer);
-  App._countdownTimer = setInterval(App.updateCountdownDisplay, 30000); // every 30s
+  App._countdownTimer = setInterval(App.updateCountdownDisplay, 30000);
 };
 
 App.updateCountdownDisplay = function () {
@@ -237,7 +225,7 @@ App.updateCountdownDisplay = function () {
   const diff = target - now;
 
   if (diff <= 0) {
-    text.textContent = `�?{ev.title}」已到期`;
+    text.textContent = '[' + ev.title + '] expired';
     bar.classList.remove('hidden');
     return;
   }
@@ -249,11 +237,11 @@ App.updateCountdownDisplay = function () {
 
   let display;
   if (days > 0) {
-    display = `距离�?{ev.title}」还�?${days} �?${hours} 小时 ${minutes} 分`;
+    display = days + 'd ' + hours + 'h ' + minutes + 'm until ' + ev.title;
   } else if (hours > 0) {
-    display = `距离�?{ev.title}」还�?${hours} 小时 ${minutes} 分`;
+    display = hours + 'h ' + minutes + 'm until ' + ev.title;
   } else {
-    display = `距离�?{ev.title}」还�?${minutes} 分`;
+    display = minutes + 'm until ' + ev.title;
   }
   text.textContent = display;
   bar.classList.remove('hidden');
@@ -273,7 +261,7 @@ App.refreshCountdownVisibility = function () {
 App.updateModeToggleBtn = function () {
   const mode = App.state.data.settings.displayMode || 'compact';
   const btn = document.getElementById('modeToggleBtn');
-  if (btn) btn.textContent = mode === 'overview' ? '总览' : '紧凑';
+  if (btn) btn.textContent = mode === 'overview' ? 'overview' : 'compact';
 };
 
 // ─── Font Size ──────────────────────────────────────────────────
