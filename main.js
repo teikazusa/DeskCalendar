@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeTheme, Tray, Menu, nativeImage, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
+const GoogleAPI = require('./src/google-api');
 
 // ─── Paths ─────────────────────────────────────────────────────────────
 const DATA_DIR = path.join(app.getPath('userData'), 'data');
@@ -301,6 +302,36 @@ function setupIPC() {
   ipcMain.handle('window-close', () => {
     app.quit();
   });
+
+  // ─── Google Calendar IPC ─────────────────────────────────────
+  ipcMain.handle('google-auth', async () => {
+    return GoogleAPI.startAuth();
+  });
+
+  ipcMain.handle('google-disconnect', async () => {
+    GoogleAPI.disconnect();
+    return true;
+  });
+
+  ipcMain.handle('google-get-status', async () => {
+    return GoogleAPI.getStatus();
+  });
+
+  ipcMain.handle('google-list-events', async (_e, syncToken) => {
+    return GoogleAPI.listEvents(syncToken || null);
+  });
+
+  ipcMain.handle('google-create-event', async (_e, dateStr, ev) => {
+    return GoogleAPI.createEvent(dateStr, ev);
+  });
+
+  ipcMain.handle('google-update-event', async (_e, googleEventId, dateStr, ev) => {
+    return GoogleAPI.updateEvent(googleEventId, dateStr, ev);
+  });
+
+  ipcMain.handle('google-delete-event', async (_e, googleEventId) => {
+    return GoogleAPI.deleteEvent(googleEventId);
+  });
 }
 
 // ─── App Lifecycle ────────────────────────────────────────────────────
@@ -317,6 +348,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     setupIPC();
+    GoogleAPI.init();
     createWindow();
     createTray();
   });

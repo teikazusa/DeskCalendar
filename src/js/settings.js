@@ -125,6 +125,86 @@ Settings.initUI = function () {
     window.api.setAutostart(enabled);
     App.saveData();
   });
+
+  // Google Calendar
+  Settings.initGoogleUI();
+};
+
+// ─── Google Calendar UI ─────────────────────────────────────────
+Settings._googleConnecting = false;
+
+Settings.initGoogleUI = function () {
+  var authBtn = document.getElementById('googleAuthBtn');
+  var authLabel = document.getElementById('googleAuthLabel');
+  var syncItem = document.getElementById('googleSyncItem');
+  var syncStatus = document.getElementById('googleSyncStatus');
+  var disconnectBtn = document.getElementById('googleDisconnectBtn');
+
+  if (!authBtn || !authLabel || !syncItem || !syncStatus || !disconnectBtn) return;
+
+  // Check current status
+  Settings.refreshGoogleUI();
+
+  // Connect button
+  authBtn.addEventListener('click', async function () {
+    if (Settings._googleConnecting) return;
+    Settings._googleConnecting = true;
+    authLabel.textContent = '正在连接...';
+    authBtn.disabled = true;
+
+    try {
+      var result = await window.GoogleSync.connect();
+      if (result && result.connected) {
+        authLabel.textContent = '已连接: ' + (result.email || 'Google');
+        syncItem.style.display = '';
+        authBtn.style.display = 'none';
+        syncStatus.textContent = '已连接: ' + (result.email || 'Google');
+      } else {
+        authLabel.textContent = '连接账号';
+      }
+    } catch (e) {
+      console.log('[Settings] Google auth failed:', e.message);
+      authLabel.textContent = '连接失败，重试';
+    }
+
+    authBtn.disabled = false;
+    Settings._googleConnecting = false;
+  });
+
+  // Disconnect button
+  disconnectBtn.addEventListener('click', async function () {
+    await window.GoogleSync.disconnect();
+    authBtn.style.display = '';
+    syncItem.style.display = 'none';
+    authLabel.textContent = '连接账号';
+  });
+};
+
+Settings.refreshGoogleUI = async function () {
+  var authBtn = document.getElementById('googleAuthBtn');
+  var authLabel = document.getElementById('googleAuthLabel');
+  var syncItem = document.getElementById('googleSyncItem');
+  var syncStatus = document.getElementById('googleSyncStatus');
+
+  if (!authBtn || !authLabel || !syncItem || !syncStatus) return;
+
+  try {
+    var status = await window.api.googleGetStatus();
+    if (status && status.connected) {
+      authLabel.textContent = '已连接: ' + (status.email || 'Google');
+      authBtn.style.display = 'none';
+      syncItem.style.display = '';
+      syncStatus.textContent = '已连接: ' + (status.email || 'Google');
+    } else {
+      authBtn.style.display = '';
+      syncItem.style.display = 'none';
+      authLabel.textContent = '连接账号';
+    }
+  } catch (_) {
+    authBtn.style.display = '';
+    syncItem.style.display = 'none';
+    authLabel.textContent = '连接账号';
+  }
 };
 
 // ─── Toggle settings panel ─────────────────────────────────────

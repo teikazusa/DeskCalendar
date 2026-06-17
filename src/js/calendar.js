@@ -225,6 +225,9 @@ Calendar.render = function () {
             });
             App.saveData();
             Sync.upsertEvent(targetKey, newEv);
+            if (window.GoogleSync && window.GoogleSync.ready) {
+              window.GoogleSync.pushEvent(targetKey, newEv);
+            }
             Calendar.render();
             window.Events.render(App.state.selectedDate);
           }

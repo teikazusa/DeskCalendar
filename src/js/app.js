@@ -81,6 +81,7 @@ App.init = async function () {
   Settings.initUI();
   App.resizeToFit();
   Sync.init();
+  GoogleSync.init();
 
   // Restore saved countdown if event still exists
   const savedCd = App.state.data.settings._savedCountdown;
@@ -99,7 +100,10 @@ App.init = async function () {
   document.getElementById('closeSettingsBtn').addEventListener('click', Settings.toggle);
   document.getElementById('settingsOverlay').addEventListener('click', Settings.toggle);
 
-  document.getElementById('syncBtn').addEventListener('click', () => Sync._pull());
+  document.getElementById('syncBtn').addEventListener('click', () => {
+    Sync._pull();
+    if (window.GoogleSync && window.GoogleSync.ready) window.GoogleSync._pull();
+  });
   App.updateModeToggleBtn();
   document.getElementById('modeToggleBtn').addEventListener('click', async () => {
     const s = App.state.data.settings;

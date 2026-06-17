@@ -332,18 +332,28 @@ Events.saveEvent = function () {
 
   App.saveData();
 
-  // Sync saved event(s) to Supabase
+  // Sync saved event(s) to Supabase and Google
   const savedEvents = App.state.data.events[dateStr] || [];
   const evId = App.state.editingEventId || (savedEvents.length > 0 ? savedEvents[savedEvents.length - 1].id : null);
   if (evId) {
     const savedEv = savedEvents.find(e => e.id === evId);
-    if (savedEv) Sync.upsertEvent(dateStr, savedEv);
+    if (savedEv) {
+      Sync.upsertEvent(dateStr, savedEv);
+      if (window.GoogleSync && window.GoogleSync.ready) {
+        window.GoogleSync.pushEvent(dateStr, savedEv);
+      }
+    }
     if (_seriesEditScope === 'future' && (savedEv ? savedEv.seriesId : null)) {
       const sid = savedEv.seriesId;
       Object.keys(App.state.data.events).forEach(ds => {
         if (ds === dateStr) return;
         (App.state.data.events[ds] || []).forEach(e => {
-          if (e.seriesId === sid) Sync.upsertEvent(ds, e);
+          if (e.seriesId === sid) {
+            Sync.upsertEvent(ds, e);
+            if (window.GoogleSync && window.GoogleSync.ready) {
+              window.GoogleSync.pushEvent(ds, e);
+            }
+          }
         });
       });
     }
@@ -377,8 +387,12 @@ Events.cancelForm = function () {
 // ─── Delete event ──────────────────────────────────────────────
 Events.deleteEvent = function (dateStr, eventId) {
   if (!dateStr || !eventId) return;
-  Sync.markDeleted(eventId);
   const events = App.state.data.events[dateStr] || [];
+  const ev = events.find(e => e.id === eventId);
+  if (ev && ev.googleEventId && window.GoogleSync && window.GoogleSync.ready) {
+    window.GoogleSync.deleteEvent(ev);
+  }
+  Sync.markDeleted(eventId);
   App.state.data.events[dateStr] = events.filter(e => e.id !== eventId);
   if (App.state.data.events[dateStr].length === 0) {
     delete App.state.data.events[dateStr];

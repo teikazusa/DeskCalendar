@@ -12,4 +12,12 @@ contextBridge.exposeInMainWorld('api', {
   minimize: () => ipcRenderer.invoke('window-minimize'),
   close: () => ipcRenderer.invoke('window-close'),
   toggleDevTools: () => ipcRenderer.invoke('toggle-devtools'),
+  // Google Calendar integration
+  googleAuth: () => ipcRenderer.invoke('google-auth'),
+  googleDisconnect: () => ipcRenderer.invoke('google-disconnect'),
+  googleGetStatus: () => ipcRenderer.invoke('google-get-status'),
+  googleCreateEvent: (dateStr, ev) => ipcRenderer.invoke('google-create-event', dateStr, ev),
+  googleUpdateEvent: (googleEventId, dateStr, ev) => ipcRenderer.invoke('google-update-event', googleEventId, dateStr, ev),
+  googleDeleteEvent: (googleEventId) => ipcRenderer.invoke('google-delete-event', googleEventId),
+  googleListEvents: (syncToken) => ipcRenderer.invoke('google-list-events', syncToken),
 });
