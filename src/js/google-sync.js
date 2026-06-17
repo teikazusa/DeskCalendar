@@ -1,18 +1,61 @@
 // ─── Google Calendar Sync Engine (renderer process) ────────────
-window.GoogleSync = { ready: false };
+window.GoogleSync = {
+  ready: false,
+  status: 'disconnected', // 'disconnected' | 'idle' | 'syncing' | 'error'
+  lastSyncTime: null,
+  lastSyncResult: '',     // human-readable result
+  lastError: '',
+};
 
-let _pollTimer = null;
-let _syncToken = null;
-let _suppressPush = false;
-let _pollInterval = 300000; // 5 minutes default
+var _pollTimer = null;
+var _syncToken = null;
+var _suppressPush = false;
+var _pollInterval = 300000; // 5 minutes default
+var _notifyTimer = null;
+
+// ─── In-app notification (uses countdown bar) ───────────────────
+function _notify(msg, isError) {
+  var bar = document.getElementById('countdownBar');
+  var text = document.getElementById('countdownText');
+  if (!bar || !text) return;
+  if (_notifyTimer) clearTimeout(_notifyTimer);
+  bar.classList.remove('hidden');
+  text.textContent = (isError ? '⚠ ' : '') + msg;
+  bar.style.background = isError ? 'rgba(255,59,48,0.18)' : 'rgba(52,199,89,0.15)';
+  _notifyTimer = setTimeout(function () {
+    bar.classList.add('hidden');
+    bar.style.background = '';
+    bar.style.background = 'rgba(255,255,255,0.06)'; // restore original
+  }, 5000);
+}
+
+// ─── Helpers ────────────────────────────────────────────────────
+function _setStatus(status, result, errMsg) {
+  GoogleSync.status = status;
+  if (result !== undefined) {
+    GoogleSync.lastSyncResult = result;
+    GoogleSync.lastSyncTime = new Date().toISOString();
+    if (result) _notify(result, status === 'error');
+  }
+  if (errMsg !== undefined) {
+    GoogleSync.lastError = errMsg;
+    if (errMsg) _notify(errMsg, true);
+  }
+  }
+  if (errMsg !== undefined) GoogleSync.lastError = errMsg;
+  // Refresh settings UI if open
+  if (window.Settings && typeof window.Settings.refreshGoogleUI === 'function') {
+    window.Settings.refreshGoogleUI();
+  }
+}
 
 // ─── Init ───────────────────────────────────────────────────────
 GoogleSync.init = async function () {
   try {
-    const status = await window.api.googleGetStatus();
+    var status = await window.api.googleGetStatus();
     if (status && status.connected) {
       GoogleSync.ready = true;
-      console.log('[GoogleSync] Connected as', status.email);
+      _setStatus('idle', '已连接 ' + (status.email || 'Google'));
       // Pull latest on startup
       await GoogleSync._pull();
       // Upload any unsynced local events
@@ -20,18 +63,19 @@ GoogleSync.init = async function () {
       // Start polling
       GoogleSync._startPolling();
     } else {
-      console.log('[GoogleSync] Not connected');
+      _setStatus('disconnected', '');
     }
   } catch (e) {
-    console.log('[GoogleSync] Init error:', e.message);
+    _setStatus('error', '', 'Init: ' + e.message);
   }
 };
 
 // ─── Push: Create or update event in Google Calendar ────────────
 GoogleSync.pushEvent = async function (dateStr, ev) {
   if (!GoogleSync.ready || _suppressPush) return;
+  _setStatus('syncing');
   try {
-    let result;
+    var result;
     if (ev.googleEventId) {
       result = await window.api.googleUpdateEvent(ev.googleEventId, dateStr, ev);
     } else {
@@ -42,34 +86,40 @@ GoogleSync.pushEvent = async function (dateStr, ev) {
       ev.googleSyncSeq = result.googleSyncSeq;
       if (result.updatedAt) ev.updatedAt = result.updatedAt;
       App.saveData();
-
+      _setStatus('idle', '已推送: ' + ev.title);
       // Suppress push briefly to avoid re-push on next poll cycle
       _suppressPush = true;
       setTimeout(function () { _suppressPush = false; }, 3000);
+    } else {
+      _setStatus('error', '', '推送返回空结果');
     }
   } catch (e) {
-    console.log('[GoogleSync] Push error:', e.message);
+    _setStatus('error', '', '推送失败: ' + e.message);
   }
 };
 
 // ─── Delete event from Google Calendar ──────────────────────────
 GoogleSync.deleteEvent = async function (ev) {
   if (!GoogleSync.ready || _suppressPush || !ev.googleEventId) return;
+  _setStatus('syncing');
   try {
     await window.api.googleDeleteEvent(ev.googleEventId);
+    _setStatus('idle', '已删除: ' + ev.title);
     _suppressPush = true;
     setTimeout(function () { _suppressPush = false; }, 3000);
   } catch (e) {
-    console.log('[GoogleSync] Delete error:', e.message);
+    _setStatus('error', '', '删除失败: ' + e.message);
   }
 };
 
 // ─── Upload all unsynced local events ───────────────────────────
 GoogleSync._uploadAllLocal = async function () {
   if (!GoogleSync.ready) return;
+  _setStatus('syncing');
   var local = App.state.data.events || {};
   var allDates = Object.keys(local);
   var count = 0;
+  var errors = [];
   for (var di = 0; di < allDates.length; di++) {
     var d = allDates[di];
     var list = local[d] || [];
@@ -85,43 +135,52 @@ GoogleSync._uploadAllLocal = async function () {
             count++;
           }
         } catch (e) {
-          console.log('[GoogleSync] Upload error for', ev.title, ':', e.message);
+          errors.push(ev.title + ': ' + e.message);
         }
       }
     }
   }
   if (count > 0) {
     await App.saveData();
-    console.log('[GoogleSync] Uploaded', count, 'local events');
+    var msg = '已上传 ' + count + ' 条事项';
+    if (errors.length > 0) msg += '，' + errors.length + ' 条失败';
+    _setStatus('idle', msg, errors.length > 0 ? errors.join('; ') : '');
+  } else if (errors.length > 0) {
+    _setStatus('error', '', '全部上传失败: ' + errors.join('; '));
+  } else {
+    _setStatus('idle', allDates.length === 0 ? '暂无本地事项' : '所有事项已同步');
   }
 };
 
 // ─── Pull: Fetch events from Google Calendar and merge ──────────
 GoogleSync._pull = async function () {
   if (!GoogleSync.ready) return;
+  _setStatus('syncing');
   try {
     var result = await window.api.googleListEvents(_syncToken || null);
-    if (!result || !result.items) return;
-
-    var remote = result.items;
-    var hasItems = false;
-    var keys = Object.keys(remote);
-    for (var i = 0; i < keys.length; i++) {
-      if (remote[keys[i]] && remote[keys[i]].length > 0) {
-        hasItems = true;
-        break;
-      }
+    if (!result || !result.items) {
+      _setStatus('idle', 'Google 日历无事项');
+      return;
     }
 
-    if (hasItems) {
-      var local = App.state.data.events || {};
-      App.state.data.events = _merge(LocalOrEmpty(local), remote);
-      App.saveData();
+    var remote = result.items;
+    var remoteCount = 0;
+    var keys = Object.keys(remote);
+    for (var i = 0; i < keys.length; i++) {
+      if (remote[keys[i]]) remoteCount += remote[keys[i]].length;
+    }
 
+    if (remoteCount > 0) {
+      var local = App.state.data.events || {};
+      App.state.data.events = _merge(local, remote);
+      App.saveData();
+      _setStatus('idle', '从 Google 拉取 ' + remoteCount + ' 条事项');
       // Refresh UI
       if (window.Calendar) window.Calendar.render();
       if (window.Events) window.Events.render(App.state.selectedDate);
       if (typeof App.resizeToFit === 'function') App.resizeToFit();
+    } else {
+      _setStatus('idle', 'Google 日历无事项');
     }
 
     // Store syncToken for incremental sync next time
@@ -129,17 +188,27 @@ GoogleSync._pull = async function () {
       _syncToken = result.nextSyncToken;
     }
   } catch (e) {
-    console.log('[GoogleSync] Pull error:', e.message);
+    var errMsg = e.message || String(e);
+    _setStatus('error', '', '拉取失败: ' + errMsg);
     // If syncToken expired (410 Gone), clear it for full re-sync
-    if (e.message && e.message.indexOf('410') !== -1) {
+    if (errMsg.indexOf('410') !== -1) {
       _syncToken = null;
-      console.log('[GoogleSync] Sync token expired, will do full sync next');
     }
   }
 };
 
+// ─── Force sync now (called from settings UI) ───────────────────
+GoogleSync.forceSync = async function () {
+  if (!GoogleSync.ready) {
+    _setStatus('error', '', '未连接');
+    return;
+  }
+  _setStatus('syncing');
+  await GoogleSync._pull();
+  await GoogleSync._uploadAllLocal();
+};
+
 // ─── Merge: Timestamp-based conflict resolution ─────────────────
-// Same pattern as Sync._merge in sync.js
 function _merge(local, remote) {
   var merged = {};
   var allDates = {};
@@ -168,14 +237,12 @@ function _merge(local, remote) {
       var key = re.googleEventId || re.id;
 
       if (re.completed) {
-        // Google event is cancelled — remove from local
         delete map[key];
         continue;
       }
 
       var existing = map[key];
       if (!existing) {
-        // New event from Google — add to local
         map[key] = re;
         continue;
       }
@@ -184,14 +251,12 @@ function _merge(local, remote) {
       var localTime = existing.updatedAt || '0';
       var remoteTime = re.updatedAt || '0';
       if (remoteTime > localTime) {
-        // Google is newer — overwrite local fields, keep local id
         var localId = existing.id;
         for (var k in re) {
           if (re.hasOwnProperty(k)) existing[k] = re[k];
         }
         existing.id = localId;
       }
-      // else: local is newer — keep local (will be pushed up on next uploadAllLocal)
     }
 
     // Collect non-completed events
@@ -217,10 +282,6 @@ function _merge(local, remote) {
   return merged;
 }
 
-function LocalOrEmpty(obj) {
-  return obj || {};
-}
-
 // ─── Polling ────────────────────────────────────────────────────
 GoogleSync._startPolling = function () {
   if (_pollTimer) clearInterval(_pollTimer);
@@ -237,16 +298,19 @@ GoogleSync._stopPolling = function () {
 // ─── Auth helpers for settings UI ───────────────────────────────
 GoogleSync.connect = async function () {
   try {
+    _setStatus('syncing', '正在授权...');
     var result = await window.api.googleAuth();
     if (result && result.connected) {
       GoogleSync.ready = true;
+      _setStatus('syncing', '授权成功，正在同步...');
       await GoogleSync._pull();
       await GoogleSync._uploadAllLocal();
       GoogleSync._startPolling();
       return result;
     }
+    _setStatus('disconnected', '');
   } catch (e) {
-    console.log('[GoogleSync] Auth error:', e.message);
+    _setStatus('error', '', '授权失败: ' + e.message);
     throw e;
   }
   return null;
@@ -256,5 +320,6 @@ GoogleSync.disconnect = async function () {
   GoogleSync.ready = false;
   GoogleSync._stopPolling();
   _syncToken = null;
+  _setStatus('disconnected', '已断开');
   await window.api.googleDisconnect();
 };

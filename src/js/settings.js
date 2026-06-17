@@ -138,7 +138,9 @@ Settings.initGoogleUI = function () {
   var authLabel = document.getElementById('googleAuthLabel');
   var syncItem = document.getElementById('googleSyncItem');
   var syncStatus = document.getElementById('googleSyncStatus');
+  var syncDetail = document.getElementById('googleSyncDetail');
   var disconnectBtn = document.getElementById('googleDisconnectBtn');
+  var pullBtn = document.getElementById('googlePullBtn');
 
   if (!authBtn || !authLabel || !syncItem || !syncStatus || !disconnectBtn) return;
 
@@ -155,15 +157,11 @@ Settings.initGoogleUI = function () {
     try {
       var result = await window.GoogleSync.connect();
       if (result && result.connected) {
-        authLabel.textContent = '已连接: ' + (result.email || 'Google');
-        syncItem.style.display = '';
-        authBtn.style.display = 'none';
-        syncStatus.textContent = '已连接: ' + (result.email || 'Google');
+        Settings.refreshGoogleUI();
       } else {
         authLabel.textContent = '连接账号';
       }
     } catch (e) {
-      console.log('[Settings] Google auth failed:', e.message);
       authLabel.textContent = '连接失败，重试';
     }
 
@@ -174,10 +172,20 @@ Settings.initGoogleUI = function () {
   // Disconnect button
   disconnectBtn.addEventListener('click', async function () {
     await window.GoogleSync.disconnect();
-    authBtn.style.display = '';
-    syncItem.style.display = 'none';
-    authLabel.textContent = '连接账号';
+    Settings.refreshGoogleUI();
   });
+
+  // Force sync button
+  if (pullBtn) {
+    pullBtn.addEventListener('click', async function () {
+      pullBtn.disabled = true;
+      pullBtn.textContent = '同步中...';
+      await window.GoogleSync.forceSync();
+      pullBtn.textContent = '立即同步';
+      pullBtn.disabled = false;
+      Settings.refreshGoogleUI();
+    });
+  }
 };
 
 Settings.refreshGoogleUI = async function () {
@@ -185,16 +193,40 @@ Settings.refreshGoogleUI = async function () {
   var authLabel = document.getElementById('googleAuthLabel');
   var syncItem = document.getElementById('googleSyncItem');
   var syncStatus = document.getElementById('googleSyncStatus');
+  var syncDetail = document.getElementById('googleSyncDetail');
+  var pullBtn = document.getElementById('googlePullBtn');
 
   if (!authBtn || !authLabel || !syncItem || !syncStatus) return;
 
   try {
-    var status = await window.api.googleGetStatus();
-    if (status && status.connected) {
-      authLabel.textContent = '已连接: ' + (status.email || 'Google');
+    var apiStatus = await window.api.googleGetStatus();
+    if (apiStatus && apiStatus.connected) {
+      authLabel.textContent = '已连接: ' + (apiStatus.email || 'Google');
       authBtn.style.display = 'none';
       syncItem.style.display = '';
-      syncStatus.textContent = '已连接: ' + (status.email || 'Google');
+
+      // Show GoogleSync runtime status
+      var gs = window.GoogleSync;
+      var label = '已连接';
+      if (gs.status === 'syncing') label = '⏳ 同步中...';
+      else if (gs.status === 'error') label = '⚠ 错误';
+      else if (gs.lastSyncResult) label = '✓ ' + gs.lastSyncResult;
+      syncStatus.textContent = label;
+
+      // Detail line: last sync time + error hint
+      if (syncDetail) {
+        var parts = [];
+        if (gs.lastSyncTime) {
+          var t = new Date(gs.lastSyncTime);
+          parts.push('上次同步: ' + t.toLocaleTimeString());
+        }
+        if (gs.lastError) {
+          parts.push('错误: ' + gs.lastError);
+        }
+        syncDetail.textContent = parts.join(' | ');
+        syncDetail.style.color = gs.lastError ? '#FF3B30' : '';
+      }
+      if (pullBtn) pullBtn.style.display = '';
     } else {
       authBtn.style.display = '';
       syncItem.style.display = 'none';

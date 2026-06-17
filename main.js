@@ -318,19 +318,44 @@ function setupIPC() {
   });
 
   ipcMain.handle('google-list-events', async (_e, syncToken) => {
-    return GoogleAPI.listEvents(syncToken || null);
+    try {
+      return await GoogleAPI.listEvents(syncToken || null);
+    } catch (e) {
+      console.error('[GoogleAPI] listEvents error:', e.message, e.code, e.errors);
+      throw e;
+    }
   });
 
   ipcMain.handle('google-create-event', async (_e, dateStr, ev) => {
-    return GoogleAPI.createEvent(dateStr, ev);
+    try {
+      console.log('[GoogleAPI] Creating event:', ev.title, 'on', dateStr);
+      const result = await GoogleAPI.createEvent(dateStr, ev);
+      console.log('[GoogleAPI] Created:', result.googleEventId);
+      return result;
+    } catch (e) {
+      console.error('[GoogleAPI] createEvent error:', e.message, e.code, e.errors);
+      throw e;
+    }
   });
 
   ipcMain.handle('google-update-event', async (_e, googleEventId, dateStr, ev) => {
-    return GoogleAPI.updateEvent(googleEventId, dateStr, ev);
+    try {
+      console.log('[GoogleAPI] Updating event:', googleEventId);
+      return await GoogleAPI.updateEvent(googleEventId, dateStr, ev);
+    } catch (e) {
+      console.error('[GoogleAPI] updateEvent error:', e.message, e.code, e.errors);
+      throw e;
+    }
   });
 
   ipcMain.handle('google-delete-event', async (_e, googleEventId) => {
-    return GoogleAPI.deleteEvent(googleEventId);
+    try {
+      console.log('[GoogleAPI] Deleting event:', googleEventId);
+      return await GoogleAPI.deleteEvent(googleEventId);
+    } catch (e) {
+      console.error('[GoogleAPI] deleteEvent error:', e.message, e.code, e.errors);
+      throw e;
+    }
   });
 }
 
